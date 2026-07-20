@@ -52,5 +52,21 @@ class DatabaseSeeder extends Seeder
             'branch_id' => $branch->id,
         ]);
         $owner->assignRole('Business Owner');
+
+        $branchManager = User::factory()->create([
+            'name' => 'Demo Branch Manager',
+            'email' => 'manager@demo.test',
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+        ]);
+        $branchManager->assignRole('Branch Manager');
+
+        $cashier = User::factory()->create([
+            'name' => 'Demo Cashier',
+            'email' => 'cashier@demo.test',
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+        ]);
+        $cashier->assignRole('Cashier');
     }
 }
