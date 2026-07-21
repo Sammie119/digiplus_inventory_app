@@ -23,6 +23,7 @@ new class extends Component
         <x-slot name="trigger">
             <button class="inline-flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none transition ease-in-out duration-150">
                 <span
+                    class="hidden sm:inline"
                     x-data="{{ json_encode(['name' => auth()->user()->name]) }}"
                     x-text="name"
                     x-on:profile-updated.window="name = $event.detail.name"

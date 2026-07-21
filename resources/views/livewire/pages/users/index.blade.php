@@ -170,7 +170,63 @@ new #[Layout('layouts.app')] class extends Component
                 </x-primary-button>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <!-- Mobile: stacked cards -->
+            <div class="sm:hidden space-y-3">
+                @forelse ($this->users as $tenantUser)
+                    <div wire:key="user-card-{{ $tenantUser->id }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <div class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ $tenantUser->name }}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ $tenantUser->email }}</div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button
+                                    type="button"
+                                    title="{{ __('Edit') }}"
+                                    aria-label="{{ __('Edit') }}"
+                                    class="inline-flex items-center justify-center p-1.5 rounded-md text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40"
+                                    wire:click="editUser({{ $tenantUser->id }})"
+                                    x-on:click="$dispatch('open-modal', 'user-form')"
+                                ><x-icon.pencil class="h-4 w-4" /></button>
+                                <button
+                                    type="button"
+                                    title="{{ $tenantUser->status === 'active' ? __('Deactivate') : __('Reactivate') }}"
+                                    aria-label="{{ $tenantUser->status === 'active' ? __('Deactivate') : __('Reactivate') }}"
+                                    class="inline-flex items-center justify-center p-1.5 rounded-md {{ $tenantUser->status === 'active' ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40' : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40' }}"
+                                    wire:click="toggleStatus({{ $tenantUser->id }})"
+                                    wire:confirm="{{ $tenantUser->status === 'active' ? __('Deactivate this user?') : __('Reactivate this user?') }}"
+                                >
+                                    @if ($tenantUser->status === 'active')
+                                        <x-icon.ban class="h-4 w-4" />
+                                    @else
+                                        <x-icon.check-circle class="h-4 w-4" />
+                                    @endif
+                                </button>
+                            </div>
+                        </div>
+
+                        <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">{{ __('Branch') }}</dt>
+                                <dd class="text-gray-900 dark:text-gray-100">{{ $tenantUser->branch?->name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">{{ __('Role') }}</dt>
+                                <dd class="text-gray-900 dark:text-gray-100">{{ $tenantUser->roles->pluck('name')->join(', ') }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">{{ __('Status') }}</dt>
+                                <dd class="text-gray-900 dark:text-gray-100">{{ ucfirst($tenantUser->status) }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                @empty
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-sm text-gray-500 dark:text-gray-400">{{ __('No users yet.') }}</div>
+                @endforelse
+            </div>
+
+            <!-- Desktop: table -->
+            <div class="hidden sm:block bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900/40">
                         <tr>

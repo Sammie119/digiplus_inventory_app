@@ -39,8 +39,8 @@
             <div class="flex-1 flex flex-col overflow-y-auto">
                 <!-- App Header: page heading (if set) + theme toggle & user menu, pushed to the far right -->
                 <header class="bg-white dark:bg-gray-800 shadow shrink-0">
-                    <div class="h-16 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-                        <div>
+                    <div class="h-16 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
+                        <div class="min-w-0 truncate">
                             {{ $header ?? '' }}
                         </div>
 

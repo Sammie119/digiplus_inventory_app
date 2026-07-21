@@ -30,10 +30,10 @@
     </head>
     <body class="antialiased font-sans bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <div class="max-w-7xl mx-auto px-6 lg:px-8">
-            <header class="flex items-center justify-between py-6">
-                <a href="/" class="flex items-center gap-2">
-                    <x-application-logo class="h-9 w-auto fill-current text-gray-800 dark:text-gray-100" />
-                    <span class="font-semibold text-gray-800 dark:text-gray-100">{{ config('app.name', 'DigiPlus Inventory Solutions') }}</span>
+            <header class="flex items-center justify-between gap-2 py-6">
+                <a href="/" class="flex items-center gap-2 min-w-0 shrink-0">
+                    <x-application-logo class="h-9 w-auto fill-current text-gray-800 dark:text-gray-100 shrink-0" />
+                    <span class="hidden sm:inline font-semibold text-gray-800 dark:text-gray-100 truncate">{{ config('app.name', 'DigiPlus Inventory Solutions') }}</span>
                 </a>
 
                 @if (Route::has('login'))
