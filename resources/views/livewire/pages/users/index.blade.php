@@ -18,6 +18,7 @@ new #[Layout('layouts.app')] class extends Component
     public string $email = '';
     public ?int $branch_id = null;
     public string $role = '';
+    public ?int $confirmingToggleStatusId = null;
 
     public function mount(): void
     {
@@ -121,10 +122,26 @@ new #[Layout('layouts.app')] class extends Component
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'user-form' }))");
     }
 
-    public function toggleStatus(int $userId): void
+    public function confirmToggleStatus(int $userId): void
     {
-        $target = User::findOrFail($userId);
+        Gate::authorize('update', User::findOrFail($userId));
+
+        $this->confirmingToggleStatusId = $userId;
+    }
+
+    #[Computed]
+    public function confirmingUser(): ?User
+    {
+        return $this->confirmingToggleStatusId ? User::find($this->confirmingToggleStatusId) : null;
+    }
+
+    public function toggleStatus(): void
+    {
+        $target = User::findOrFail($this->confirmingToggleStatusId);
         Gate::authorize('update', $target);
+
+        $this->confirmingToggleStatusId = null;
+        $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-toggle-status' }))");
 
         $actor = Auth::user();
 
@@ -166,6 +183,7 @@ new #[Layout('layouts.app')] class extends Component
 
             <div class="flex justify-end">
                 <x-primary-button wire:click="openCreateModal" x-on:click="$dispatch('open-modal', 'user-form')">
+                    <x-icon.plus class="h-4 w-4 -ml-0.5 mr-1.5" />
                     {{ __('Add User') }}
                 </x-primary-button>
             </div>
@@ -193,8 +211,8 @@ new #[Layout('layouts.app')] class extends Component
                                     title="{{ $tenantUser->status === 'active' ? __('Deactivate') : __('Reactivate') }}"
                                     aria-label="{{ $tenantUser->status === 'active' ? __('Deactivate') : __('Reactivate') }}"
                                     class="inline-flex items-center justify-center p-1.5 rounded-md {{ $tenantUser->status === 'active' ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40' : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40' }}"
-                                    wire:click="toggleStatus({{ $tenantUser->id }})"
-                                    wire:confirm="{{ $tenantUser->status === 'active' ? __('Deactivate this user?') : __('Reactivate this user?') }}"
+                                    wire:click="confirmToggleStatus({{ $tenantUser->id }})"
+                                    x-on:click="$dispatch('open-modal', 'confirm-toggle-status')"
                                 >
                                     @if ($tenantUser->status === 'active')
                                         <x-icon.ban class="h-4 w-4" />
@@ -260,8 +278,8 @@ new #[Layout('layouts.app')] class extends Component
                                         title="{{ $tenantUser->status === 'active' ? __('Deactivate') : __('Reactivate') }}"
                                         aria-label="{{ $tenantUser->status === 'active' ? __('Deactivate') : __('Reactivate') }}"
                                         class="inline-flex items-center justify-center p-1.5 rounded-md {{ $tenantUser->status === 'active' ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40 hover:text-red-900 dark:hover:text-red-300' : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/40 hover:text-green-900 dark:hover:text-green-300' }}"
-                                        wire:click="toggleStatus({{ $tenantUser->id }})"
-                                        wire:confirm="{{ $tenantUser->status === 'active' ? __('Deactivate this user?') : __('Reactivate this user?') }}"
+                                        wire:click="confirmToggleStatus({{ $tenantUser->id }})"
+                                        x-on:click="$dispatch('open-modal', 'confirm-toggle-status')"
                                     >
                                         @if ($tenantUser->status === 'active')
                                             <x-icon.ban class="h-4 w-4" />
@@ -328,4 +346,11 @@ new #[Layout('layouts.app')] class extends Component
             </div>
         </form>
     </x-modal>
+
+    <x-confirm-modal
+        name="confirm-toggle-status"
+        :title="$this->confirmingUser?->status === 'active' ? __('Deactivate this user?') : __('Reactivate this user?')"
+        confirm-action="toggleStatus"
+        :confirm-label="$this->confirmingUser?->status === 'active' ? __('Deactivate') : __('Reactivate')"
+    />
 </div>

@@ -113,7 +113,9 @@ class UserManagementTest extends TestCase
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
 
-        Volt::test('pages.users.index')->call('toggleStatus', $owner->id);
+        Volt::test('pages.users.index')
+            ->call('confirmToggleStatus', $owner->id)
+            ->call('toggleStatus');
 
         $this->assertDatabaseHas('users', ['id' => $owner->id, 'status' => 'active']);
     }
@@ -125,11 +127,15 @@ class UserManagementTest extends TestCase
         $owner = $this->createUserWithRole($tenant, $mainBranch, 'Business Owner');
         $secondOwner = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
 
-        Volt::test('pages.users.index')->call('toggleStatus', $owner->id);
+        Volt::test('pages.users.index')
+            ->call('confirmToggleStatus', $owner->id)
+            ->call('toggleStatus');
 
         $this->assertDatabaseHas('users', ['id' => $owner->id, 'status' => 'disabled']);
 
-        Volt::test('pages.users.index')->call('toggleStatus', $secondOwner->id);
+        Volt::test('pages.users.index')
+            ->call('confirmToggleStatus', $secondOwner->id)
+            ->call('toggleStatus');
 
         $this->assertDatabaseHas('users', ['id' => $secondOwner->id, 'status' => 'active']);
     }

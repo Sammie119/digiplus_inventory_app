@@ -60,6 +60,13 @@
                     {{ __('Users') }}
                 </x-sidebar-link>
             @endcan
+
+            @can('stock.view')
+                <x-sidebar-link :href="route('products.index')" :active="request()->routeIs('products.*', 'categories.*', 'units-of-measure.*')" wire:navigate>
+                    <x-slot:icon><x-icon.box /></x-slot:icon>
+                    {{ __('Products') }}
+                </x-sidebar-link>
+            @endcan
         </nav>
     </aside>
 </div>

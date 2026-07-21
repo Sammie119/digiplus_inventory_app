@@ -13,6 +13,7 @@ new #[Layout('layouts.app')] class extends Component
     public ?int $branchId = null;
     public string $name = '';
     public string $code = '';
+    public ?int $confirmingDeactivateId = null;
 
     public function mount(): void
     {
@@ -74,10 +75,20 @@ new #[Layout('layouts.app')] class extends Component
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'branch-form' }))");
     }
 
-    public function deactivate(int $branchId): void
+    public function confirmDeactivate(int $branchId): void
     {
-        $branch = Branch::withCount('users')->findOrFail($branchId);
+        Gate::authorize('delete', Branch::findOrFail($branchId));
+
+        $this->confirmingDeactivateId = $branchId;
+    }
+
+    public function deactivate(): void
+    {
+        $branch = Branch::withCount('users')->findOrFail($this->confirmingDeactivateId);
         Gate::authorize('delete', $branch);
+
+        $this->confirmingDeactivateId = null;
+        $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-deactivate-branch' }))");
 
         if ($branch->is_main_branch) {
             $this->addError('deactivate', 'The main branch cannot be deactivated.');
@@ -109,6 +120,7 @@ new #[Layout('layouts.app')] class extends Component
 
             <div class="flex justify-end">
                 <x-primary-button wire:click="openCreateModal" x-on:click="$dispatch('open-modal', 'branch-form')">
+                    <x-icon.plus class="h-4 w-4 -ml-0.5 mr-1.5" />
                     {{ __('Add Branch') }}
                 </x-primary-button>
             </div>
@@ -137,8 +149,8 @@ new #[Layout('layouts.app')] class extends Component
                                         title="{{ __('Deactivate') }}"
                                         aria-label="{{ __('Deactivate') }}"
                                         class="inline-flex items-center justify-center p-1.5 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40"
-                                        wire:click="deactivate({{ $branch->id }})"
-                                        wire:confirm="{{ __('Deactivate this branch?') }}"
+                                        wire:click="confirmDeactivate({{ $branch->id }})"
+                                        x-on:click="$dispatch('open-modal', 'confirm-deactivate-branch')"
                                     ><x-icon.ban class="h-4 w-4" /></button>
                                 @endunless
                             </div>
@@ -194,8 +206,8 @@ new #[Layout('layouts.app')] class extends Component
                                             title="{{ __('Deactivate') }}"
                                             aria-label="{{ __('Deactivate') }}"
                                             class="inline-flex items-center justify-center p-1.5 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40 hover:text-red-900 dark:hover:text-red-300"
-                                            wire:click="deactivate({{ $branch->id }})"
-                                            wire:confirm="{{ __('Deactivate this branch?') }}"
+                                            wire:click="confirmDeactivate({{ $branch->id }})"
+                                            x-on:click="$dispatch('open-modal', 'confirm-deactivate-branch')"
                                         ><x-icon.ban class="h-4 w-4" /></button>
                                     @endunless
                                 </td>
@@ -235,4 +247,13 @@ new #[Layout('layouts.app')] class extends Component
             </div>
         </form>
     </x-modal>
+
+    <x-confirm-modal
+        name="confirm-deactivate-branch"
+        :title="__('Deactivate this branch?')"
+        confirm-action="deactivate"
+        :confirm-label="__('Deactivate')"
+    >
+        {{ __('This branch will no longer be available for stock or sales.') }}
+    </x-confirm-modal>
 </div>

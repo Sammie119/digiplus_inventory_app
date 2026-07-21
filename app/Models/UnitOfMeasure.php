@@ -11,6 +11,8 @@ class UnitOfMeasure extends Model
 {
     use BelongsToTenant, HasFactory;
 
+    protected $table = 'units_of_measure';
+
     protected $guarded = ['id'];
 
     public function itemsAsBaseUnit(): HasMany

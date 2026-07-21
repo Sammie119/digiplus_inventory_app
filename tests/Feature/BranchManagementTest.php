@@ -85,7 +85,9 @@ class BranchManagementTest extends TestCase
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
 
-        Volt::test('pages.branches.index')->call('deactivate', $mainBranch->id);
+        Volt::test('pages.branches.index')
+            ->call('confirmDeactivate', $mainBranch->id)
+            ->call('deactivate');
 
         $this->assertDatabaseHas('branches', ['id' => $mainBranch->id, 'deleted_at' => null]);
     }
@@ -98,7 +100,9 @@ class BranchManagementTest extends TestCase
         $owner = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
         $this->createUserWithRole($tenant, $secondBranch, 'Cashier');
 
-        Volt::test('pages.branches.index')->call('deactivate', $secondBranch->id);
+        Volt::test('pages.branches.index')
+            ->call('confirmDeactivate', $secondBranch->id)
+            ->call('deactivate');
 
         $this->assertDatabaseHas('branches', ['id' => $secondBranch->id, 'deleted_at' => null]);
     }
