@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
@@ -143,6 +144,14 @@ class DatabaseSeeder extends Seeder
             'cost_price' => 15,
             'selling_price' => 25,
             'reorder_level' => 10,
+        ]);
+
+        Supplier::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Accra Wholesale Distributors',
+            'contact_person' => 'Kwame Mensah',
+            'phone' => '+233 20 123 4567',
+            'email' => 'sales@accrawholesale.test',
         ]);
     }
 }

@@ -67,6 +67,20 @@
                     {{ __('Products') }}
                 </x-sidebar-link>
             @endcan
+
+            @can('suppliers.view')
+                <x-sidebar-link :href="route('suppliers.index')" :active="request()->routeIs('suppliers.*')" wire:navigate>
+                    <x-slot:icon><x-icon.truck /></x-slot:icon>
+                    {{ __('Suppliers') }}
+                </x-sidebar-link>
+            @endcan
+
+            @can('stock.view')
+                <x-sidebar-link :href="route('purchases.index')" :active="request()->routeIs('purchases.*')" wire:navigate>
+                    <x-slot:icon><x-icon.clipboard-list /></x-slot:icon>
+                    {{ __('Purchases') }}
+                </x-sidebar-link>
+            @endcan
         </nav>
     </aside>
 </div>
