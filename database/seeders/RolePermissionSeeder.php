@@ -29,6 +29,7 @@ class RolePermissionSeeder extends Seeder
         'users.manage',
         'stock.view',
         'stock.manage',
+        'stock.adjustments.approve',
         'sales.create',
         'sales.view',
         'sales.void.approve',
@@ -46,11 +47,12 @@ class RolePermissionSeeder extends Seeder
     public const ROLE_PERMISSIONS = [
         'Business Owner' => [
             'tenant-settings.manage', 'branches.manage', 'users.manage', 'stock.view', 'stock.manage',
+            'stock.adjustments.approve',
             'sales.create', 'sales.view', 'sales.void.approve',
             'suppliers.view', 'suppliers.manage', 'reports.view',
         ],
         'Branch Manager' => [
-            'users.manage', 'stock.view', 'stock.manage',
+            'users.manage', 'stock.view', 'stock.manage', 'stock.adjustments.approve',
             'sales.create', 'sales.view', 'sales.void.approve',
             'suppliers.view', 'reports.view',
         ],

@@ -24,6 +24,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('purchases', 'pages.purchases.index')->name('purchases.index');
     Volt::route('purchases/create', 'pages.purchases.show')->name('purchases.create');
     Volt::route('purchases/{purchase}', 'pages.purchases.show')->name('purchases.show');
+    Volt::route('stock-adjustments', 'pages.stock-adjustments.index')->name('stock-adjustments.index');
+    Volt::route('stock-transfers', 'pages.stock-transfers.index')->name('stock-transfers.index');
+    Volt::route('stock-transfers/create', 'pages.stock-transfers.show')->name('stock-transfers.create');
+    Volt::route('stock-transfers/{stockTransfer}', 'pages.stock-transfers.show')->name('stock-transfers.show');
 });
 
 require __DIR__.'/auth.php';

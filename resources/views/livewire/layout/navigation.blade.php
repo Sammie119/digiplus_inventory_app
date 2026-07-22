@@ -81,6 +81,20 @@
                     {{ __('Purchases') }}
                 </x-sidebar-link>
             @endcan
+
+            @can('stock.view')
+                <x-sidebar-link :href="route('stock-adjustments.index')" :active="request()->routeIs('stock-adjustments.*')" wire:navigate>
+                    <x-slot:icon><x-icon.adjustments /></x-slot:icon>
+                    {{ __('Stock Adjustments') }}
+                </x-sidebar-link>
+            @endcan
+
+            @can('stock.view')
+                <x-sidebar-link :href="route('stock-transfers.index')" :active="request()->routeIs('stock-transfers.*')" wire:navigate>
+                    <x-slot:icon><x-icon.transfer /></x-slot:icon>
+                    {{ __('Stock Transfers') }}
+                </x-sidebar-link>
+            @endcan
         </nav>
     </aside>
 </div>

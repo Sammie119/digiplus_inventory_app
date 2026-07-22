@@ -46,6 +46,13 @@ class DatabaseSeeder extends Seeder
             'is_main_branch' => true,
         ]);
 
+        $downtownBranch = Branch::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Downtown Branch',
+            'code' => 'DOWNTOWN',
+            'is_main_branch' => false,
+        ]);
+
         // seedForTeam() also sets the current Spatie team id to $tenant->id,
         // so the assignRole() call below lands in the right team scope.
         app(RolePermissionSeeder::class)->seedForTeam($tenant->id);
@@ -73,6 +80,14 @@ class DatabaseSeeder extends Seeder
             'branch_id' => $branch->id,
         ]);
         $cashier->assignRole('Cashier');
+
+        $downtownManager = User::factory()->create([
+            'name' => 'Demo Downtown Manager',
+            'email' => 'downtown@demo.test',
+            'tenant_id' => $tenant->id,
+            'branch_id' => $downtownBranch->id,
+        ]);
+        $downtownManager->assignRole('Branch Manager');
 
         // Demo catalog: units of measure, categories, a simple product, and a
         // variant product, so the catalog pages aren't empty on first login.
