@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CustomerLedgerEntry;
 use App\Models\Sale;
 use App\Models\SaleReturn;
 use App\Models\StockLevel;
@@ -31,7 +32,7 @@ new #[Layout('layouts.app')] class extends Component
     {
         $actor = Auth::user();
 
-        $query = Sale::with(['branch', 'cashier', 'items.item', 'payments', 'returns.items.saleItem.item'])->latest();
+        $query = Sale::with(['branch', 'cashier', 'customer', 'items.item', 'payments', 'returns.items.saleItem.item'])->latest();
 
         if (! $actor->hasRole('Business Owner')) {
             $query->where('branch_id', $actor->branch_id);
@@ -72,7 +73,7 @@ new #[Layout('layouts.app')] class extends Component
 
     public function resolveVoid(int $saleId, bool $approve): void
     {
-        $sale = Sale::with('items.item')->findOrFail($saleId);
+        $sale = Sale::with(['items.item', 'payments', 'customer'])->findOrFail($saleId);
         Gate::authorize('resolveVoid', $sale);
 
         $actor = Auth::user();
@@ -103,6 +104,24 @@ new #[Layout('layouts.app')] class extends Component
                         ['quantity_on_hand' => 0],
                     );
                     $stockLevel->increment('quantity_on_hand', $line->quantity);
+                }
+
+                $creditAmount = (float) $sale->payments->where('payment_method', 'credit')->sum('amount');
+
+                if ($creditAmount > 0 && $sale->customer) {
+                    $newBalance = round((float) $sale->customer->credit_balance - $creditAmount, 2);
+
+                    CustomerLedgerEntry::create([
+                        'tenant_id' => $actor->tenant_id,
+                        'customer_id' => $sale->customer->id,
+                        'entry_type' => 'void_reversal',
+                        'amount' => $creditAmount,
+                        'reference_type' => Sale::class,
+                        'reference_id' => $sale->id,
+                        'balance_after' => $newBalance,
+                    ]);
+
+                    $sale->customer->update(['credit_balance' => $newBalance]);
                 }
 
                 $sale->update(['status' => 'void', 'void_approved_by' => $actor->id]);
@@ -341,6 +360,10 @@ new #[Layout('layouts.app')] class extends Component
                     <div class="text-gray-900 dark:text-gray-100">{{ $sale->cashier->name }}</div>
                     <div>{{ __('Date') }}</div>
                     <div class="text-gray-900 dark:text-gray-100">{{ $sale->created_at->format('d M Y, H:i') }}</div>
+                    @if ($sale->customer)
+                        <div>{{ __('Customer') }}</div>
+                        <div class="text-gray-900 dark:text-gray-100">{{ $sale->customer->name }}</div>
+                    @endif
                     @if ($sale->void_reason)
                         <div>{{ __('Void Reason') }}</div>
                         <div class="text-gray-900 dark:text-gray-100">{{ $sale->void_reason }}</div>

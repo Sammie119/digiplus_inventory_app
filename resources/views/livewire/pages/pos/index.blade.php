@@ -2,6 +2,8 @@
 
 use App\Models\Batch;
 use App\Models\Branch;
+use App\Models\Customer;
+use App\Models\CustomerLedgerEntry;
 use App\Models\Item;
 use App\Models\Payment;
 use App\Models\Sale;
@@ -19,13 +21,14 @@ use Livewire\Volt\Component;
 
 new #[Layout('layouts.app')] class extends Component
 {
-    public const PAYMENT_METHODS = ['cash', 'mobile_money', 'card'];
+    public const PAYMENT_METHODS = ['cash', 'mobile_money', 'card', 'credit'];
 
     public string $opening_float = '';
     public string $closing_float_counted = '';
 
     public array $lines = [];
     public array $payments = [];
+    public ?int $customer_id = null;
 
     public ?string $lastReceiptNumber = null;
     public ?float $lastReceiptTotal = null;
@@ -66,6 +69,21 @@ new #[Layout('layouts.app')] class extends Component
                 'id' => $item->id,
                 'label' => $item->sku.' ('.$item->baseUnit->abbreviation.') - '.number_format($item->selling_price, 2),
             ])
+            ->values()
+            ->all();
+    }
+
+    #[Computed]
+    public function customerOptions()
+    {
+        return Customer::orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function customerSelectOptions(): array
+    {
+        return $this->customerOptions
+            ->map(fn (Customer $customer) => ['id' => $customer->id, 'label' => $customer->name])
             ->values()
             ->all();
     }
@@ -142,6 +160,7 @@ new #[Layout('layouts.app')] class extends Component
     {
         $this->lines = [];
         $this->payments = [];
+        $this->customer_id = null;
         $this->addLine();
         $this->addPayment();
     }
@@ -189,6 +208,7 @@ new #[Layout('layouts.app')] class extends Component
         $actor = Auth::user();
 
         $validated = $this->validate([
+            'customer_id' => ['nullable', 'exists:customers,id'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.item_id' => ['required', 'exists:items,id'],
             'lines.*.quantity' => ['required', 'numeric', 'min:0.001'],
@@ -205,6 +225,26 @@ new #[Layout('layouts.app')] class extends Component
             throw ValidationException::withMessages([
                 'payments' => __('Payments must add up to the sale total (:total).', ['total' => number_format($this->linesTotal, 2)]),
             ]);
+        }
+
+        $creditAmount = collect($validated['payments'])
+            ->filter(fn ($p) => $p['method'] === 'credit')
+            ->sum(fn ($p) => (float) $p['amount']);
+
+        $customer = $validated['customer_id'] ? Customer::find($validated['customer_id']) : null;
+
+        if ($creditAmount > 0) {
+            if (! $customer) {
+                throw ValidationException::withMessages([
+                    'customer_id' => __('Select a customer to use the credit payment method.'),
+                ]);
+            }
+
+            if ($customer->credit_limit !== null && ($customer->credit_balance + $creditAmount) > $customer->credit_limit) {
+                throw ValidationException::withMessages([
+                    'customer_id' => __('This sale would exceed :name\'s credit limit.', ['name' => $customer->name]),
+                ]);
+            }
         }
 
         $resolvedLines = [];
@@ -237,7 +277,7 @@ new #[Layout('layouts.app')] class extends Component
             ];
         }
 
-        $sale = DB::transaction(function () use ($actor, $shift, $resolvedLines, $validated) {
+        $sale = DB::transaction(function () use ($actor, $shift, $resolvedLines, $validated, $creditAmount, $customer) {
             $branch = Branch::where('id', $actor->branch_id)->lockForUpdate()->first();
 
             $sequence = Sale::where('branch_id', $branch->id)->count() + 1;
@@ -250,7 +290,7 @@ new #[Layout('layouts.app')] class extends Component
                 'branch_id' => $branch->id,
                 'shift_id' => $shift->id,
                 'cashier_id' => $actor->id,
-                'customer_id' => null,
+                'customer_id' => $customer?->id,
                 'receipt_number' => $receiptNumber,
                 'subtotal' => $subtotal,
                 'discount_total' => 0,
@@ -301,6 +341,22 @@ new #[Layout('layouts.app')] class extends Component
                     'amount' => $payment['amount'],
                     'reference_number' => null,
                 ]);
+            }
+
+            if ($creditAmount > 0) {
+                $newBalance = round((float) $customer->credit_balance + $creditAmount, 2);
+
+                CustomerLedgerEntry::create([
+                    'tenant_id' => $actor->tenant_id,
+                    'customer_id' => $customer->id,
+                    'entry_type' => 'debit_sale',
+                    'amount' => $creditAmount,
+                    'reference_type' => Sale::class,
+                    'reference_id' => $sale->id,
+                    'balance_after' => $newBalance,
+                ]);
+
+                $customer->update(['credit_balance' => $newBalance]);
             }
 
             return $sale;
@@ -461,6 +517,16 @@ new #[Layout('layouts.app')] class extends Component
 
                     <div class="text-right text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
                         {{ __('Sale Total') }}: <span class="text-gray-900 dark:text-gray-100 font-semibold text-base">{{ number_format($this->linesTotal, 2) }}</span>
+                    </div>
+
+                    <div class="max-w-sm">
+                        <x-input-label :value="__('Customer (optional, required for credit)')" />
+                        <x-searchable-select
+                            :options="$this->customerSelectOptions"
+                            wire-model="customer_id"
+                            :placeholder="__('Search customers…')"
+                        />
+                        <x-input-error :messages="$errors->get('customer_id')" class="mt-2" />
                     </div>
 
                     <div>

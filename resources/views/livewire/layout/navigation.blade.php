@@ -61,6 +61,13 @@
                 </x-sidebar-link>
             @endcan
 
+            @can('sales.view')
+                <x-sidebar-link :href="route('customers.index')" :active="request()->routeIs('customers.*')" wire:navigate>
+                    <x-slot:icon><x-icon.id-card /></x-slot:icon>
+                    {{ __('Customers') }}
+                </x-sidebar-link>
+            @endcan
+
             @can('branches.manage')
                 <x-sidebar-link :href="route('branches.index')" :active="request()->routeIs('branches.index')" wire:navigate>
                     <x-slot:icon><x-icon.building /></x-slot:icon>
