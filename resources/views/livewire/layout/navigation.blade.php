@@ -82,6 +82,13 @@
                 </x-sidebar-link>
             @endcan
 
+            @can('reports.view')
+                <x-sidebar-link :href="route('reports.shifts')" :active="request()->routeIs('reports.shifts')" wire:navigate>
+                    <x-slot:icon><x-icon.clock /></x-slot:icon>
+                    {{ __('Shift Report') }}
+                </x-sidebar-link>
+            @endcan
+
             @can('branches.manage')
                 <x-sidebar-link :href="route('branches.index')" :active="request()->routeIs('branches.index')" wire:navigate>
                     <x-slot:icon><x-icon.building /></x-slot:icon>
