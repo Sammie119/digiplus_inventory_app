@@ -12,6 +12,7 @@ Route::view('profile', 'profile')
 Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('dashboard', 'pages.dashboard.index')->name('dashboard');
     Volt::route('reports/sales', 'pages.reports.sales')->name('reports.sales');
+    Volt::route('reports/stock', 'pages.reports.stock')->name('reports.stock');
     Volt::route('branches', 'pages.branches.index')->name('branches.index');
     Volt::route('users', 'pages.users.index')->name('users.index');
     Volt::route('categories', 'pages.categories.index')->name('categories.index');

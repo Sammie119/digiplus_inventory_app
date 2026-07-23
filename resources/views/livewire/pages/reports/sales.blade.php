@@ -2,6 +2,7 @@
 
 use App\Models\Branch;
 use App\Models\Sale;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
@@ -91,6 +92,84 @@ new #[Layout('layouts.app')] class extends Component
             ->values()
             ->all();
     }
+
+    private function branchLabel(): string
+    {
+        if (! $this->branch_id) {
+            return __('All Branches');
+        }
+
+        return $this->branchOptions->firstWhere('id', $this->branch_id)?->name ?? __('All Branches');
+    }
+
+    private function exportFilename(string $extension): string
+    {
+        return "sales-report-{$this->from}-to-{$this->to}.{$extension}";
+    }
+
+    public function exportCsv()
+    {
+        Gate::authorize('reports.view');
+
+        $summary = $this->summary;
+        $rows = $this->dailyBreakdown;
+        $from = $this->from;
+        $to = $this->to;
+        $branchLabel = $this->branchLabel();
+
+        return response()->streamDownload(function () use ($summary, $rows, $from, $to, $branchLabel) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [__('Sales Report')]);
+            fputcsv($handle, [__('Branch'), $branchLabel]);
+            fputcsv($handle, [__('Period'), "{$from} to {$to}"]);
+            fputcsv($handle, [__('Generated'), now()->toDateTimeString()]);
+            fputcsv($handle, []);
+            fputcsv($handle, [__('Sales'), __('Revenue'), __('Cost'), __('Margin'), __('Margin %')]);
+            fputcsv($handle, [
+                $summary['count'],
+                number_format($summary['revenue'], 2, '.', ''),
+                number_format($summary['cost'], 2, '.', ''),
+                number_format($summary['margin'], 2, '.', ''),
+                number_format($summary['margin_pct'], 1, '.', ''),
+            ]);
+            fputcsv($handle, []);
+            fputcsv($handle, [__('Date'), __('Sales'), __('Revenue'), __('Cost'), __('Margin')]);
+
+            foreach ($rows as $day) {
+                fputcsv($handle, [
+                    $day['date'],
+                    $day['count'],
+                    number_format($day['revenue'], 2, '.', ''),
+                    number_format($day['cost'], 2, '.', ''),
+                    number_format($day['margin'], 2, '.', ''),
+                ]);
+            }
+
+            fclose($handle);
+        }, $this->exportFilename('csv'), ['Content-Type' => 'text/csv']);
+    }
+
+    public function exportPdf()
+    {
+        Gate::authorize('reports.view');
+
+        $pdf = Pdf::loadView('pdf.sales-report', [
+            'tenantName' => Auth::user()->tenant->name,
+            'branchName' => $this->branchLabel(),
+            'from' => $this->from,
+            'to' => $this->to,
+            'generatedAt' => now()->toDateTimeString(),
+            'summary' => $this->summary,
+            'dailyBreakdown' => $this->dailyBreakdown,
+        ]);
+
+        return response()->streamDownload(
+            fn () => print ($pdf->output()),
+            $this->exportFilename('pdf'),
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
 }; ?>
 
 <div>
@@ -120,6 +199,15 @@ new #[Layout('layouts.app')] class extends Component
                         </select>
                     </div>
                 @endif
+
+                <div class="flex gap-2 ml-auto">
+                    <x-secondary-button type="button" wire:click="exportCsv">
+                        {{ __('Export CSV') }}
+                    </x-secondary-button>
+                    <x-secondary-button type="button" wire:click="exportPdf">
+                        {{ __('Export PDF') }}
+                    </x-secondary-button>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">

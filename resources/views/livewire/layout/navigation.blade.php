@@ -69,9 +69,16 @@
             @endcan
 
             @can('reports.view')
-                <x-sidebar-link :href="route('reports.sales')" :active="request()->routeIs('reports.*')" wire:navigate>
+                <x-sidebar-link :href="route('reports.sales')" :active="request()->routeIs('reports.sales')" wire:navigate>
                     <x-slot:icon><x-icon.trending-up /></x-slot:icon>
-                    {{ __('Reports') }}
+                    {{ __('Sales Report') }}
+                </x-sidebar-link>
+            @endcan
+
+            @can('reports.view')
+                <x-sidebar-link :href="route('reports.stock')" :active="request()->routeIs('reports.stock')" wire:navigate>
+                    <x-slot:icon><x-icon.archive /></x-slot:icon>
+                    {{ __('Stock Report') }}
                 </x-sidebar-link>
             @endcan
 
