@@ -5,15 +5,13 @@ use Livewire\Volt\Volt;
 
 Route::view('/', 'welcome');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Volt::route('dashboard', 'pages.dashboard.index')->name('dashboard');
+    Volt::route('reports/sales', 'pages.reports.sales')->name('reports.sales');
     Volt::route('branches', 'pages.branches.index')->name('branches.index');
     Volt::route('users', 'pages.users.index')->name('users.index');
     Volt::route('categories', 'pages.categories.index')->name('categories.index');

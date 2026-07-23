@@ -68,6 +68,13 @@
                 </x-sidebar-link>
             @endcan
 
+            @can('reports.view')
+                <x-sidebar-link :href="route('reports.sales')" :active="request()->routeIs('reports.*')" wire:navigate>
+                    <x-slot:icon><x-icon.trending-up /></x-slot:icon>
+                    {{ __('Reports') }}
+                </x-sidebar-link>
+            @endcan
+
             @can('branches.manage')
                 <x-sidebar-link :href="route('branches.index')" :active="request()->routeIs('branches.index')" wire:navigate>
                     <x-slot:icon><x-icon.building /></x-slot:icon>
