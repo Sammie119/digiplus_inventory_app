@@ -47,6 +47,20 @@
                 {{ __('Dashboard') }}
             </x-sidebar-link>
 
+            @can('sales.create')
+                <x-sidebar-link :href="route('pos.index')" :active="request()->routeIs('pos.index')" wire:navigate>
+                    <x-slot:icon><x-icon.shopping-cart /></x-slot:icon>
+                    {{ __('Point of Sale') }}
+                </x-sidebar-link>
+            @endcan
+
+            @can('sales.view')
+                <x-sidebar-link :href="route('sales.index')" :active="request()->routeIs('sales.*')" wire:navigate>
+                    <x-slot:icon><x-icon.receipt /></x-slot:icon>
+                    {{ __('Sales') }}
+                </x-sidebar-link>
+            @endcan
+
             @can('branches.manage')
                 <x-sidebar-link :href="route('branches.index')" :active="request()->routeIs('branches.index')" wire:navigate>
                     <x-slot:icon><x-icon.building /></x-slot:icon>
@@ -65,6 +79,13 @@
                 <x-sidebar-link :href="route('products.index')" :active="request()->routeIs('products.*', 'categories.*', 'units-of-measure.*')" wire:navigate>
                     <x-slot:icon><x-icon.box /></x-slot:icon>
                     {{ __('Products') }}
+                </x-sidebar-link>
+            @endcan
+
+            @can('stock.view')
+                <x-sidebar-link :href="route('stock-levels.index')" :active="request()->routeIs('stock-levels.*')" wire:navigate>
+                    <x-slot:icon><x-icon.chart-bar /></x-slot:icon>
+                    {{ __('Stock Levels') }}
                 </x-sidebar-link>
             @endcan
 

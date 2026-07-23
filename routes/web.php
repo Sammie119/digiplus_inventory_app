@@ -28,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('stock-transfers', 'pages.stock-transfers.index')->name('stock-transfers.index');
     Volt::route('stock-transfers/create', 'pages.stock-transfers.show')->name('stock-transfers.create');
     Volt::route('stock-transfers/{stockTransfer}', 'pages.stock-transfers.show')->name('stock-transfers.show');
+    Volt::route('pos', 'pages.pos.index')->name('pos.index');
+    Volt::route('sales', 'pages.sales.index')->name('sales.index');
+    Volt::route('stock-levels', 'pages.stock-levels.index')->name('stock-levels.index');
 });
 
 require __DIR__.'/auth.php';

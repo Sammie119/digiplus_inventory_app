@@ -43,4 +43,18 @@ class SaleItem extends Model
     {
         return $this->hasMany(SaleReturnItem::class);
     }
+
+    /**
+     * Quantity still eligible to be returned — the sold quantity minus
+     * whatever's already reserved by a pending or approved return, so two
+     * concurrent return requests can't together exceed what was sold.
+     */
+    public function remainingReturnableQuantity(): float
+    {
+        $reserved = $this->returnItems()
+            ->whereHas('saleReturn', fn ($q) => $q->whereIn('status', ['pending', 'approved']))
+            ->sum('quantity_returned');
+
+        return max(0, (float) $this->quantity - (float) $reserved);
+    }
 }
