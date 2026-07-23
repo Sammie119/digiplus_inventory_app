@@ -70,7 +70,8 @@ class BranchManagementTest extends TestCase
         Volt::test('pages.branches.index')
             ->set('name', 'Downtown Branch')
             ->set('code', 'dt1')
-            ->call('save');
+            ->call('save')
+            ->assertDispatched('toast', message: 'Branch created.', type: 'success');
 
         $this->assertDatabaseHas('branches', [
             'tenant_id' => $tenant->id,

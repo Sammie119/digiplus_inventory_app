@@ -138,6 +138,7 @@ new #[Layout('layouts.app')] class extends Component
 
         unset($this->adjustments);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'adjustment-form' }))");
+        $this->dispatch('toast', message: __('Adjustment submitted for approval.'), type: 'success');
     }
 
     public function approve(int $id): void
@@ -155,9 +156,10 @@ new #[Layout('layouts.app')] class extends Component
                 ->sum('quantity_on_hand');
 
             if ($currentQty + $delta < 0) {
-                throw ValidationException::withMessages([
-                    'approve' => __('Insufficient stock to apply this adjustment (:qty currently on hand).', ['qty' => $currentQty]),
-                ]);
+                $message = __('Insufficient stock to apply this adjustment (:qty currently on hand).', ['qty' => $currentQty]);
+                $this->dispatch('toast', message: $message, type: 'error');
+
+                throw ValidationException::withMessages(['approve' => $message]);
             }
         }
 
@@ -192,6 +194,7 @@ new #[Layout('layouts.app')] class extends Component
 
         unset($this->adjustments);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'approve-adjustment-{$id}' }))");
+        $this->dispatch('toast', message: __('Adjustment approved.'), type: 'success');
     }
 
     public function reject(int $id): void
@@ -203,6 +206,7 @@ new #[Layout('layouts.app')] class extends Component
 
         unset($this->adjustments);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'reject-adjustment-{$id}' }))");
+        $this->dispatch('toast', message: __('Adjustment rejected.'), type: 'success');
     }
 }; ?>
 

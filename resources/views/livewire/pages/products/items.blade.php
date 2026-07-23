@@ -151,6 +151,8 @@ new #[Layout('layouts.app')] class extends Component
             );
         }
 
+        $this->dispatch('toast', message: $this->itemId ? __('Item updated.') : __('Item created.'), type: 'success');
+
         $this->resetForm();
         unset($this->items);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'item-form' }))");
@@ -173,6 +175,7 @@ new #[Layout('layouts.app')] class extends Component
         $this->confirmingDeactivateId = null;
         unset($this->items);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-deactivate-item' }))");
+        $this->dispatch('toast', message: __('Item deactivated.'), type: 'success');
     }
 }; ?>
 

@@ -44,7 +44,10 @@
                             {{ $header ?? '' }}
                         </div>
 
-                        <livewire:layout.user-menu />
+                        <div class="flex items-center gap-2">
+                            <livewire:layout.notifications />
+                            <livewire:layout.user-menu />
+                        </div>
                     </div>
                 </header>
 
@@ -54,5 +57,7 @@
                 </main>
             </div>
         </div>
+
+        <x-toast-container />
     </body>
 </html>

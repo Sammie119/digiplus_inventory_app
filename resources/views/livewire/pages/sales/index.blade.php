@@ -69,6 +69,7 @@ new #[Layout('layouts.app')] class extends Component
         $this->voidingSaleId = null;
         unset($this->sales);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'void-sale-{$saleId}' }))");
+        $this->dispatch('toast', message: __('Void requested — pending approval.'), type: 'success');
     }
 
     public function resolveVoid(int $saleId, bool $approve): void
@@ -132,6 +133,7 @@ new #[Layout('layouts.app')] class extends Component
 
         unset($this->sales);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'resolve-void-{$saleId}' }))");
+        $this->dispatch('toast', message: $approve ? __('Void approved.') : __('Void rejected.'), type: 'success');
     }
 
     public function openReturnModal(int $saleId): void
@@ -205,6 +207,7 @@ new #[Layout('layouts.app')] class extends Component
         $this->returningSaleId = null;
         unset($this->sales);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'return-sale-{$saleId}' }))");
+        $this->dispatch('toast', message: __('Return requested — pending approval.'), type: 'success');
     }
 
     public function resolveReturn(int $returnId, bool $approve): void
@@ -256,6 +259,7 @@ new #[Layout('layouts.app')] class extends Component
 
         unset($this->sales);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'resolve-return-{$returnId}' }))");
+        $this->dispatch('toast', message: $approve ? __('Return approved.') : __('Return rejected.'), type: 'success');
     }
 }; ?>
 

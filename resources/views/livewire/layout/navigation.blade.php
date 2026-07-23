@@ -89,6 +89,15 @@
                 </x-sidebar-link>
             @endcan
 
+            @can('reports.view')
+                @if (auth()->user()->hasRole(['Business Owner', 'Branch Manager']))
+                    <x-sidebar-link :href="route('reports.scheduled')" :active="request()->routeIs('reports.scheduled')" wire:navigate>
+                        <x-slot:icon><x-icon.mail /></x-slot:icon>
+                        {{ __('Scheduled Reports') }}
+                    </x-sidebar-link>
+                @endif
+            @endcan
+
             @can('branches.manage')
                 <x-sidebar-link :href="route('branches.index')" :active="request()->routeIs('branches.index')" wire:navigate>
                     <x-slot:icon><x-icon.building /></x-slot:icon>

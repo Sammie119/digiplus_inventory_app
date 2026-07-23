@@ -2,6 +2,7 @@
 
 use App\Models\Branch;
 use App\Models\Sale;
+use App\Reports\SalesReportData;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -54,43 +55,21 @@ new #[Layout('layouts.app')] class extends Component
     }
 
     #[Computed]
+    public function reportData(): array
+    {
+        return SalesReportData::build(Auth::user()->tenant_id, $this->branch_id, $this->from ?: today()->toDateString(), $this->to ?: today()->toDateString());
+    }
+
+    #[Computed]
     public function summary(): array
     {
-        $sales = $this->sales;
-
-        $revenue = (float) $sales->sum('grand_total');
-        $cost = (float) $sales->sum(fn ($sale) => $sale->items->sum(fn ($line) => $line->cost_at_sale * $line->quantity));
-        $margin = $revenue - $cost;
-
-        return [
-            'count' => $sales->count(),
-            'revenue' => $revenue,
-            'cost' => $cost,
-            'margin' => $margin,
-            'margin_pct' => $revenue > 0 ? ($margin / $revenue) * 100 : 0,
-        ];
+        return $this->reportData['summary'];
     }
 
     #[Computed]
     public function dailyBreakdown(): array
     {
-        return $this->sales
-            ->groupBy(fn ($sale) => $sale->created_at->format('Y-m-d'))
-            ->map(function ($daySales, $date) {
-                $revenue = (float) $daySales->sum('grand_total');
-                $cost = (float) $daySales->sum(fn ($sale) => $sale->items->sum(fn ($line) => $line->cost_at_sale * $line->quantity));
-
-                return [
-                    'date' => $date,
-                    'count' => $daySales->count(),
-                    'revenue' => $revenue,
-                    'cost' => $cost,
-                    'margin' => $revenue - $cost,
-                ];
-            })
-            ->sortKeysDesc()
-            ->values()
-            ->all();
+        return $this->reportData['dailyBreakdown'];
     }
 
     private function branchLabel(): string

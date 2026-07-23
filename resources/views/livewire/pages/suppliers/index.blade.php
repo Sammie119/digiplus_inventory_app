@@ -78,6 +78,8 @@ new #[Layout('layouts.app')] class extends Component
             Supplier::create([...$validated, 'tenant_id' => Auth::user()->tenant_id]);
         }
 
+        $this->dispatch('toast', message: $supplier ? __('Supplier updated.') : __('Supplier created.'), type: 'success');
+
         $this->resetForm();
         unset($this->suppliers);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'supplier-form' }))");

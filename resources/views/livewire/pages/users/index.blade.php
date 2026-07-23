@@ -117,6 +117,8 @@ new #[Layout('layouts.app')] class extends Component
             );
         }
 
+        $this->dispatch('toast', message: $target ? __('User updated.') : __('User created.'), type: 'success');
+
         $this->reset(['userId', 'name', 'email', 'branch_id', 'role']);
         unset($this->users);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'user-form' }))");
@@ -147,6 +149,7 @@ new #[Layout('layouts.app')] class extends Component
 
         if ($target->id === $actor->id) {
             $this->addError('status', 'You cannot deactivate your own account.');
+            $this->dispatch('toast', message: __('You cannot deactivate your own account.'), type: 'error');
 
             return;
         }
@@ -160,13 +163,17 @@ new #[Layout('layouts.app')] class extends Component
 
             if ($remainingOwners === 0) {
                 $this->addError('status', 'A tenant must always have at least one active Business Owner.');
+                $this->dispatch('toast', message: __('A tenant must always have at least one active Business Owner.'), type: 'error');
 
                 return;
             }
         }
 
-        $target->update(['status' => $target->status === 'active' ? 'disabled' : 'active']);
+        $newStatus = $target->status === 'active' ? 'disabled' : 'active';
+        $target->update(['status' => $newStatus]);
         unset($this->users);
+
+        $this->dispatch('toast', message: $newStatus === 'active' ? __('User reactivated.') : __('User deactivated.'), type: 'success');
     }
 }; ?>
 

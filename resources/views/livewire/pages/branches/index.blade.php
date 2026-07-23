@@ -70,6 +70,8 @@ new #[Layout('layouts.app')] class extends Component
             Branch::create([...$validated, 'tenant_id' => $tenantId, 'is_main_branch' => false]);
         }
 
+        $this->dispatch('toast', message: $branch ? __('Branch updated.') : __('Branch created.'), type: 'success');
+
         $this->reset(['branchId', 'name', 'code']);
         unset($this->branches);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'branch-form' }))");
@@ -92,18 +94,21 @@ new #[Layout('layouts.app')] class extends Component
 
         if ($branch->is_main_branch) {
             $this->addError('deactivate', 'The main branch cannot be deactivated.');
+            $this->dispatch('toast', message: __('The main branch cannot be deactivated.'), type: 'error');
 
             return;
         }
 
         if ($branch->users_count > 0) {
             $this->addError('deactivate', 'Reassign staff out of this branch before deactivating it.');
+            $this->dispatch('toast', message: __('Reassign staff out of this branch before deactivating it.'), type: 'error');
 
             return;
         }
 
         $branch->delete();
         unset($this->branches);
+        $this->dispatch('toast', message: __('Branch deactivated.'), type: 'success');
     }
 }; ?>
 

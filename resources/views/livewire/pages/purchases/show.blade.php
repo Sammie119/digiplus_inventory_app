@@ -236,6 +236,7 @@ new #[Layout('layouts.app')] class extends Component
         });
 
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-receive-purchase' }))");
+        $this->dispatch('toast', message: __('Purchase received — stock updated.'), type: 'success');
     }
 }; ?>
 

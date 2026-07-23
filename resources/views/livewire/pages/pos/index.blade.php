@@ -191,6 +191,7 @@ new #[Layout('layouts.app')] class extends Component
         $this->lastVariance = null;
         unset($this->openShift);
         $this->resetCart();
+        $this->dispatch('toast', message: __('Shift opened.'), type: 'success');
     }
 
     public function completeSale(): void
@@ -367,6 +368,7 @@ new #[Layout('layouts.app')] class extends Component
 
         unset($this->openShift);
         $this->resetCart();
+        $this->dispatch('toast', message: __('Sale completed.'), type: 'success');
     }
 
     public function endShift(): void
@@ -403,6 +405,7 @@ new #[Layout('layouts.app')] class extends Component
         unset($this->openShift);
 
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-close-shift' }))");
+        $this->dispatch('toast', message: __('Shift closed.'), type: 'success');
     }
 }; ?>
 

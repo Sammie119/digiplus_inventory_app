@@ -73,6 +73,8 @@ new #[Layout('layouts.app')] class extends Component
             Product::create([...$validated, 'tenant_id' => Auth::user()->tenant_id]);
         }
 
+        $this->dispatch('toast', message: $product ? __('Product updated.') : __('Product created.'), type: 'success');
+
         $this->reset(['productId', 'name', 'category_id', 'description', 'has_variants']);
         unset($this->products);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'product-form' }))");

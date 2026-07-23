@@ -118,7 +118,8 @@ class SaleVoidAndReturnTest extends TestCase
         Volt::test('pages.sales.index')
             ->call('openVoidModal', $sale->id)
             ->set('voidReason', 'Customer changed their mind')
-            ->call('requestVoid');
+            ->call('requestVoid')
+            ->assertDispatched('toast', message: 'Void requested — pending approval.', type: 'success');
 
         $this->assertDatabaseHas('sales', [
             'id' => $sale->id,

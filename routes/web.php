@@ -14,6 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('reports/sales', 'pages.reports.sales')->name('reports.sales');
     Volt::route('reports/stock', 'pages.reports.stock')->name('reports.stock');
     Volt::route('reports/shifts', 'pages.reports.shifts')->name('reports.shifts');
+    Volt::route('reports/scheduled', 'pages.reports.scheduled')->name('reports.scheduled');
     Volt::route('branches', 'pages.branches.index')->name('branches.index');
     Volt::route('users', 'pages.users.index')->name('users.index');
     Volt::route('categories', 'pages.categories.index')->name('categories.index');
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('stock-levels', 'pages.stock-levels.index')->name('stock-levels.index');
     Volt::route('customers', 'pages.customers.index')->name('customers.index');
     Volt::route('audit-log', 'pages.audit-log.index')->name('audit-log.index');
+    Volt::route('notifications', 'pages.notifications.index')->name('notifications.index');
 });
 
 require __DIR__.'/auth.php';

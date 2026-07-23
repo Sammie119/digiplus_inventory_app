@@ -197,9 +197,10 @@ new #[Layout('layouts.app')] class extends Component
                 ->sum('quantity_on_hand');
 
             if ($onHand < (float) $line->quantity_sent) {
-                throw ValidationException::withMessages([
-                    'ship' => __('Insufficient stock at the source branch for :sku (:qty currently on hand).', ['sku' => $line->item->sku, 'qty' => $onHand]),
-                ]);
+                $message = __('Insufficient stock at the source branch for :sku (:qty currently on hand).', ['sku' => $line->item->sku, 'qty' => $onHand]);
+                $this->dispatch('toast', message: $message, type: 'error');
+
+                throw ValidationException::withMessages(['ship' => $message]);
             }
         }
 
@@ -245,6 +246,7 @@ new #[Layout('layouts.app')] class extends Component
         });
 
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-ship-transfer' }))");
+        $this->dispatch('toast', message: __('Transfer shipped.'), type: 'success');
     }
 
     public function receive(): void
@@ -297,6 +299,7 @@ new #[Layout('layouts.app')] class extends Component
         });
 
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-receive-transfer' }))");
+        $this->dispatch('toast', message: __('Transfer received.'), type: 'success');
     }
 
     public function cancel(): void
@@ -306,6 +309,7 @@ new #[Layout('layouts.app')] class extends Component
         $this->stockTransfer->update(['status' => 'cancelled']);
 
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-cancel-transfer' }))");
+        $this->dispatch('toast', message: __('Transfer cancelled.'), type: 'success');
     }
 }; ?>
 

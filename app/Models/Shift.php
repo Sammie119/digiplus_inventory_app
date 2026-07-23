@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Support\Notifier;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,21 @@ class Shift extends Model
     use BelongsToTenant, HasFactory;
 
     protected $guarded = ['id'];
+
+    protected static function booted(): void
+    {
+        static::updated(function (Shift $model) {
+            if (! array_key_exists('variance', $model->getChanges())) {
+                return;
+            }
+
+            if ($model->status !== 'closed') {
+                return;
+            }
+
+            Notifier::largeDiscrepancy($model);
+        });
+    }
 
     protected function casts(): array
     {

@@ -129,7 +129,9 @@ class StockAdjustmentManagementTest extends TestCase
             'requested_by' => $owner->id,
         ]);
 
-        Volt::test('pages.stock-adjustments.index')->call('approve', $adjustment->id);
+        Volt::test('pages.stock-adjustments.index')
+            ->call('approve', $adjustment->id)
+            ->assertDispatched('toast', message: 'Adjustment approved.', type: 'success');
 
         $this->assertDatabaseHas('stock_movements', [
             'tenant_id' => $tenant->id,

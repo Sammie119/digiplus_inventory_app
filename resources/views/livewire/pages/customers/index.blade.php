@@ -79,6 +79,8 @@ new #[Layout('layouts.app')] class extends Component
             Customer::create([...$validated, 'tenant_id' => Auth::user()->tenant_id, 'credit_balance' => 0]);
         }
 
+        $this->dispatch('toast', message: $customer ? __('Customer updated.') : __('Customer created.'), type: 'success');
+
         $this->resetForm();
         unset($this->customers);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'customer-form' }))");
@@ -112,6 +114,8 @@ new #[Layout('layouts.app')] class extends Component
 
             $customer->update(['credit_balance' => $newBalance]);
         });
+
+        $this->dispatch('toast', message: __('Payment recorded.'), type: 'success');
 
         $this->paymentAmount = '';
         unset($this->customers);

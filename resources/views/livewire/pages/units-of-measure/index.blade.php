@@ -60,6 +60,8 @@ new #[Layout('layouts.app')] class extends Component
             UnitOfMeasure::create([...$validated, 'tenant_id' => Auth::user()->tenant_id]);
         }
 
+        $this->dispatch('toast', message: $unit ? __('Unit updated.') : __('Unit created.'), type: 'success');
+
         $this->reset(['unitId', 'name', 'abbreviation']);
         unset($this->units);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'unit-form' }))");

@@ -70,6 +70,8 @@ new #[Layout('layouts.app')] class extends Component
             Category::create([...$validated, 'tenant_id' => Auth::user()->tenant_id]);
         }
 
+        $this->dispatch('toast', message: $category ? __('Category updated.') : __('Category created.'), type: 'success');
+
         $this->reset(['categoryId', 'name', 'parent_category_id']);
         unset($this->categories);
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'category-form' }))");

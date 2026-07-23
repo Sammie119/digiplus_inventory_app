@@ -123,7 +123,8 @@ class PosManagementTest extends TestCase
             ->set('lines.0.quantity', '3')
             ->set('payments.0.method', 'cash')
             ->set('payments.0.amount', '60')
-            ->call('completeSale');
+            ->call('completeSale')
+            ->assertDispatched('toast', message: 'Sale completed.', type: 'success');
 
         $sale = Sale::where('tenant_id', $tenant->id)->firstOrFail();
         $this->assertEquals(60, $sale->grand_total);
