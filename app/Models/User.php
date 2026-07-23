@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\HasUuid;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,7 +20,16 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, HasUuid, Notifiable, SoftDeletes;
+    use Auditable, HasFactory, HasRoles, HasUuid, Notifiable, SoftDeletes;
+
+    /**
+     * Kept out of the audit trail entirely — no reason to duplicate a
+     * hashed password (even hashed) into a second plain-JSON column.
+     */
+    protected static function auditExcept(): array
+    {
+        return ['password', 'remember_token'];
+    }
 
     /**
      * Not tenant-scoped: authentication looks users up by email before any

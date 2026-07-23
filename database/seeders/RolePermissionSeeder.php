@@ -37,6 +37,7 @@ class RolePermissionSeeder extends Seeder
         'suppliers.manage',
         'reports.view',
         'reports.view-all-tenants',
+        'audit.view',
     ];
 
     /**
@@ -49,7 +50,7 @@ class RolePermissionSeeder extends Seeder
             'tenant-settings.manage', 'branches.manage', 'users.manage', 'stock.view', 'stock.manage',
             'stock.adjustments.approve',
             'sales.create', 'sales.view', 'sales.void.approve',
-            'suppliers.view', 'suppliers.manage', 'reports.view',
+            'suppliers.view', 'suppliers.manage', 'reports.view', 'audit.view',
         ],
         'Branch Manager' => [
             'users.manage', 'stock.view', 'stock.manage', 'stock.adjustments.approve',

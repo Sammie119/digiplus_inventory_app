@@ -103,6 +103,13 @@
                 </x-sidebar-link>
             @endcan
 
+            @can('audit.view')
+                <x-sidebar-link :href="route('audit-log.index')" :active="request()->routeIs('audit-log.*')" wire:navigate>
+                    <x-slot:icon><x-icon.shield-check /></x-slot:icon>
+                    {{ __('Audit Log') }}
+                </x-sidebar-link>
+            @endcan
+
             @can('stock.view')
                 <x-sidebar-link :href="route('products.index')" :active="request()->routeIs('products.*', 'categories.*', 'units-of-measure.*')" wire:navigate>
                     <x-slot:icon><x-icon.box /></x-slot:icon>

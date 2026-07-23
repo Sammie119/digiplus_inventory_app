@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('sales', 'pages.sales.index')->name('sales.index');
     Volt::route('stock-levels', 'pages.stock-levels.index')->name('stock-levels.index');
     Volt::route('customers', 'pages.customers.index')->name('customers.index');
+    Volt::route('audit-log', 'pages.audit-log.index')->name('audit-log.index');
 });
 
 require __DIR__.'/auth.php';
