@@ -102,7 +102,7 @@ new #[Layout('layouts.app')] class extends Component
 
         $validated = $this->validate([
             'sku' => ['required', 'string', 'max:100', Rule::unique('items')->where('tenant_id', $tenantId)->ignore($item?->id)],
-            'barcode' => ['nullable', 'string', 'max:100'],
+            'barcode' => ['nullable', 'string', 'max:100', Rule::unique('items')->where('tenant_id', $tenantId)->ignore($item?->id)],
             'size' => ['nullable', 'string', 'max:50'],
             'color' => ['nullable', 'string', 'max:50'],
             'base_unit_id' => ['required', 'exists:units_of_measure,id'],
@@ -212,8 +212,15 @@ new #[Layout('layouts.app')] class extends Component
                                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ collect($item->variant_attributes)->map(fn ($v, $k) => ucfirst($k).': '.$v)->join(', ') }}</div>
                                 @endif
                             </div>
-                            @can('update', $product)
-                                <div class="flex items-center gap-1 shrink-0">
+                            <div class="flex items-center gap-1 shrink-0">
+                                <a
+                                    href="{{ route('items.label', $item) }}"
+                                    target="_blank"
+                                    title="{{ __('Print Label') }}"
+                                    aria-label="{{ __('Print Label') }}"
+                                    class="inline-flex items-center justify-center p-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                ><x-icon.tag class="h-4 w-4" /></a>
+                                @can('update', $product)
                                     <button
                                         type="button"
                                         title="{{ __('Edit') }}"
@@ -230,8 +237,8 @@ new #[Layout('layouts.app')] class extends Component
                                         wire:click="confirmDeactivate({{ $item->id }})"
                                         x-on:click="$dispatch('open-modal', 'confirm-deactivate-item')"
                                     ><x-icon.ban class="h-4 w-4" /></button>
-                                </div>
-                            @endcan
+                                @endcan
+                            </div>
                         </div>
                         <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
                             <div>
@@ -288,6 +295,13 @@ new #[Layout('layouts.app')] class extends Component
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ number_format($item->selling_price, 2) }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $item->reorder_level }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-1">
+                                    <a
+                                        href="{{ route('items.label', $item) }}"
+                                        target="_blank"
+                                        title="{{ __('Print Label') }}"
+                                        aria-label="{{ __('Print Label') }}"
+                                        class="inline-flex items-center justify-center p-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    ><x-icon.tag class="h-4 w-4" /></a>
                                     @can('update', $product)
                                         <button
                                             type="button"

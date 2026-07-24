@@ -231,6 +231,63 @@ class ProductManagementTest extends TestCase
             ->assertHasErrors('sku');
     }
 
+    public function test_duplicate_barcode_within_tenant_is_rejected(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
+
+        $category = Category::factory()->create(['tenant_id' => $tenant->id]);
+        $product = Product::factory()->create(['tenant_id' => $tenant->id, 'category_id' => $category->id]);
+        $unit = UnitOfMeasure::factory()->create(['tenant_id' => $tenant->id]);
+
+        Item::factory()->create([
+            'tenant_id' => $tenant->id,
+            'product_id' => $product->id,
+            'barcode' => '1234567890123',
+            'base_unit_id' => $unit->id,
+        ]);
+
+        Volt::test('pages.products.items', ['product' => $product])
+            ->set('sku', 'NEW-SKU')
+            ->set('barcode', '1234567890123')
+            ->set('base_unit_id', $unit->id)
+            ->set('cost_price', '5.00')
+            ->set('selling_price', '8.00')
+            ->call('save')
+            ->assertHasErrors('barcode');
+    }
+
+    public function test_same_barcode_is_allowed_across_different_tenants(): void
+    {
+        $tenantA = Tenant::factory()->create();
+        $branchA = Branch::factory()->main()->create(['tenant_id' => $tenantA->id]);
+        $categoryA = Category::factory()->create(['tenant_id' => $tenantA->id]);
+        $productA = Product::factory()->create(['tenant_id' => $tenantA->id, 'category_id' => $categoryA->id]);
+        $unitA = UnitOfMeasure::factory()->create(['tenant_id' => $tenantA->id]);
+        Item::factory()->create([
+            'tenant_id' => $tenantA->id, 'product_id' => $productA->id, 'barcode' => 'SHARED-CODE', 'base_unit_id' => $unitA->id,
+        ]);
+
+        $tenantB = Tenant::factory()->create();
+        $branchB = Branch::factory()->main()->create(['tenant_id' => $tenantB->id]);
+        $this->loginAs($this->createUserWithRole($tenantB, $branchB, 'Business Owner'));
+        $categoryB = Category::factory()->create(['tenant_id' => $tenantB->id]);
+        $productB = Product::factory()->create(['tenant_id' => $tenantB->id, 'category_id' => $categoryB->id]);
+        $unitB = UnitOfMeasure::factory()->create(['tenant_id' => $tenantB->id]);
+
+        Volt::test('pages.products.items', ['product' => $productB])
+            ->set('sku', 'TENANT-B-SKU')
+            ->set('barcode', 'SHARED-CODE')
+            ->set('base_unit_id', $unitB->id)
+            ->set('cost_price', '5.00')
+            ->set('selling_price', '8.00')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('items', ['tenant_id' => $tenantB->id, 'barcode' => 'SHARED-CODE']);
+    }
+
     public function test_business_owner_can_deactivate_item(): void
     {
         $tenant = Tenant::factory()->create();

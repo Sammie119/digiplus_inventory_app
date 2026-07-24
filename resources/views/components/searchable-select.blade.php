@@ -17,12 +17,20 @@
         get filtered() {
             return this.search === ''
                 ? this.options
-                : this.options.filter(o => o.label.toLowerCase().includes(this.search.toLowerCase()));
+                : this.options.filter(o => o.label.toLowerCase().includes(this.search.toLowerCase())
+                    || (o.code && o.code.toLowerCase() === this.search.toLowerCase()));
         },
         select(option) {
             this.itemId = option.id;
             this.search = option.label;
             this.open = false;
+        },
+        selectByExactCode() {
+            // A hardware barcode scanner types the code then sends Enter —
+            // this lets that Enter keystroke select the match immediately,
+            // with no mouse click needed.
+            const match = this.options.find(o => o.code && o.code.toLowerCase() === this.search.toLowerCase());
+            if (match) this.select(match);
         },
     }"
     x-on:click.outside="open = false; syncSearchFromSelection()"
@@ -34,6 +42,7 @@
         x-on:focus="open = true; search = ''"
         x-on:input="open = true"
         x-on:keydown.escape="open = false; syncSearchFromSelection()"
+        x-on:keydown.enter.prevent="selectByExactCode()"
         autocomplete="off"
         placeholder="{{ $placeholder }}"
         {{ $attributes->merge(['class' => 'border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block w-full']) }}

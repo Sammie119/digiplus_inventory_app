@@ -71,6 +71,7 @@ new #[Layout('layouts.app')] class extends Component
             ->map(fn (Item $item) => [
                 'id' => $item->id,
                 'label' => $item->sku.' ('.$item->baseUnit->abbreviation.')',
+                'code' => $item->barcode,
             ])
             ->values()
             ->all();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ItemBarcodeLabelController;
 use App\Http\Controllers\SaleReceiptController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -23,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('units-of-measure', 'pages.units-of-measure.index')->name('units-of-measure.index');
     Volt::route('products', 'pages.products.index')->name('products.index');
     Volt::route('products/{product}/items', 'pages.products.items')->name('products.items');
+    Route::get('items/{uuid}/label', ItemBarcodeLabelController::class)->name('items.label');
     Volt::route('suppliers', 'pages.suppliers.index')->name('suppliers.index');
     Volt::route('purchases', 'pages.purchases.index')->name('purchases.index');
     Volt::route('purchases/create', 'pages.purchases.show')->name('purchases.create');
