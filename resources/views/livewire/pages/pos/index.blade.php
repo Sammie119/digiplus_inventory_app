@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\Shift;
 use App\Models\StockLevel;
 use App\Models\StockMovement;
+use App\Support\SaleTaxCalculator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -32,6 +33,7 @@ new #[Layout('layouts.app')] class extends Component
 
     public ?string $lastReceiptNumber = null;
     public ?float $lastReceiptTotal = null;
+    public ?string $lastSaleUuid = null;
     public ?float $lastExpectedCash = null;
     public ?float $lastVariance = null;
 
@@ -128,6 +130,43 @@ new #[Layout('layouts.app')] class extends Component
         });
     }
 
+    private function resolvedCartLines(): array
+    {
+        return collect($this->lines)
+            ->map(function ($line) {
+                $item = $this->itemOptions->firstWhere('id', $line['item_id']);
+
+                return $item ? ['item' => $item, 'quantity' => (float) ($line['quantity'] ?? 0)] : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    #[Computed]
+    public function taxCalculation(): array
+    {
+        return SaleTaxCalculator::calculate(Auth::user()->tenant_id, $this->resolvedCartLines());
+    }
+
+    #[Computed]
+    public function taxBreakdown(): array
+    {
+        return $this->taxCalculation['breakdown'];
+    }
+
+    #[Computed]
+    public function taxTotal(): float
+    {
+        return $this->taxCalculation['total'];
+    }
+
+    #[Computed]
+    public function grandTotal(): float
+    {
+        return round($this->linesTotal + $this->taxTotal, 2);
+    }
+
     #[Computed]
     public function paymentsTotal(): float
     {
@@ -163,6 +202,12 @@ new #[Layout('layouts.app')] class extends Component
         $this->customer_id = null;
         $this->addLine();
         $this->addPayment();
+
+        // Invalidate Livewire's per-request computed cache: completeSale()
+        // reads these (via grandTotal, for the payment-matching check)
+        // before the cart is reset, so without this the post-sale render
+        // would show the previous sale's totals against an empty cart.
+        unset($this->linesTotal, $this->taxCalculation, $this->taxBreakdown, $this->taxTotal, $this->grandTotal);
     }
 
     public function startShift(): void
@@ -187,6 +232,7 @@ new #[Layout('layouts.app')] class extends Component
         $this->opening_float = '';
         $this->lastReceiptNumber = null;
         $this->lastReceiptTotal = null;
+        $this->lastSaleUuid = null;
         $this->lastExpectedCash = null;
         $this->lastVariance = null;
         unset($this->openShift);
@@ -219,12 +265,12 @@ new #[Layout('layouts.app')] class extends Component
             'payments.*.amount' => ['required', 'numeric', 'min:0.01'],
         ]);
 
-        $linesTotalCents = (int) round($this->linesTotal * 100);
+        $grandTotalCents = (int) round($this->grandTotal * 100);
         $paymentsTotalCents = (int) round(collect($validated['payments'])->sum(fn ($p) => (float) $p['amount']) * 100);
 
-        if ($linesTotalCents !== $paymentsTotalCents) {
+        if ($grandTotalCents !== $paymentsTotalCents) {
             throw ValidationException::withMessages([
-                'payments' => __('Payments must add up to the sale total (:total).', ['total' => number_format($this->linesTotal, 2)]),
+                'payments' => __('Payments must add up to the sale total (:total).', ['total' => number_format($this->grandTotal, 2)]),
             ]);
         }
 
@@ -285,6 +331,7 @@ new #[Layout('layouts.app')] class extends Component
             $receiptNumber = sprintf('%s-%d-%06d', $branch->code, now()->year, $sequence);
 
             $subtotal = round(collect($resolvedLines)->sum(fn ($line) => $line['quantity'] * $line['unit_price']), 2);
+            $taxTotal = SaleTaxCalculator::calculate($actor->tenant_id, $resolvedLines)['total'];
 
             $sale = Sale::create([
                 'tenant_id' => $actor->tenant_id,
@@ -295,8 +342,8 @@ new #[Layout('layouts.app')] class extends Component
                 'receipt_number' => $receiptNumber,
                 'subtotal' => $subtotal,
                 'discount_total' => 0,
-                'tax_total' => 0,
-                'grand_total' => $subtotal,
+                'tax_total' => $taxTotal,
+                'grand_total' => round($subtotal + $taxTotal, 2),
                 'status' => 'completed',
             ]);
 
@@ -365,6 +412,7 @@ new #[Layout('layouts.app')] class extends Component
 
         $this->lastReceiptNumber = $sale->receipt_number;
         $this->lastReceiptTotal = (float) $sale->grand_total;
+        $this->lastSaleUuid = $sale->uuid;
 
         unset($this->openShift);
         $this->resetCart();
@@ -401,6 +449,7 @@ new #[Layout('layouts.app')] class extends Component
         $this->closing_float_counted = '';
         $this->lastReceiptNumber = null;
         $this->lastReceiptTotal = null;
+        $this->lastSaleUuid = null;
 
         unset($this->openShift);
 
@@ -449,8 +498,13 @@ new #[Layout('layouts.app')] class extends Component
                 </div>
 
                 @if ($lastReceiptNumber)
-                    <div class="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-md text-sm">
-                        {{ __('Sale completed - Receipt :receipt, Total :total', ['receipt' => $lastReceiptNumber, 'total' => number_format($lastReceiptTotal, 2)]) }}
+                    <div class="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-md text-sm flex items-center justify-between gap-4">
+                        <span>{{ __('Sale completed - Receipt :receipt, Total :total', ['receipt' => $lastReceiptNumber, 'total' => number_format($lastReceiptTotal, 2)]) }}</span>
+                        @if ($lastSaleUuid)
+                            <a href="{{ route('sales.receipt', $lastSaleUuid) }}" target="_blank" class="shrink-0 font-medium text-green-800 dark:text-green-300 underline hover:text-green-900 dark:hover:text-green-200">
+                                {{ __('Print Receipt') }}
+                            </a>
+                        @endif
                     </div>
                 @endif
 
@@ -518,8 +572,18 @@ new #[Layout('layouts.app')] class extends Component
                         </div>
                     </div>
 
-                    <div class="text-right text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
-                        {{ __('Sale Total') }}: <span class="text-gray-900 dark:text-gray-100 font-semibold text-base">{{ number_format($this->linesTotal, 2) }}</span>
+                    <div class="text-right text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4 space-y-1">
+                        <div>
+                            {{ __('Subtotal') }}: <span class="text-gray-900 dark:text-gray-100 font-medium">{{ number_format($this->linesTotal, 2) }}</span>
+                        </div>
+                        @foreach ($this->taxBreakdown as $tax)
+                            <div>
+                                {{ $tax['name'] }} ({{ rtrim(rtrim(number_format($tax['rate'], 2), '0'), '.') }}%): <span class="text-gray-900 dark:text-gray-100 font-medium">{{ number_format($tax['amount'], 2) }}</span>
+                            </div>
+                        @endforeach
+                        <div>
+                            {{ __('Grand Total') }}: <span class="text-gray-900 dark:text-gray-100 font-semibold text-base">{{ number_format($this->grandTotal, 2) }}</span>
+                        </div>
                     </div>
 
                     <div class="max-w-sm">
@@ -573,7 +637,7 @@ new #[Layout('layouts.app')] class extends Component
                         </div>
 
                         <div class="text-right text-sm text-gray-500 dark:text-gray-400 mt-4">
-                            {{ __('Payments Total') }}: <span class="{{ round($this->paymentsTotal, 2) === round($this->linesTotal, 2) ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400' }} font-medium">{{ number_format($this->paymentsTotal, 2) }}</span>
+                            {{ __('Payments Total') }}: <span class="{{ round($this->paymentsTotal, 2) === round($this->grandTotal, 2) ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400' }} font-medium">{{ number_format($this->paymentsTotal, 2) }}</span>
                         </div>
                     </div>
 

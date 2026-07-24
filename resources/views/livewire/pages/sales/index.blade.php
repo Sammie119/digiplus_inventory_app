@@ -429,12 +429,27 @@ new #[Layout('layouts.app')] class extends Component
                     </div>
                 @endif
 
-                <div class="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-3 font-semibold text-gray-900 dark:text-gray-100">
-                    <span>{{ __('Grand Total') }}</span>
-                    <span>{{ number_format($sale->grand_total, 2) }}</span>
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-1">
+                    @if ($sale->tax_total > 0)
+                        <div class="flex justify-between text-gray-500 dark:text-gray-400">
+                            <span>{{ __('Subtotal') }}</span>
+                            <span>{{ number_format($sale->subtotal, 2) }}</span>
+                        </div>
+                        <div class="flex justify-between text-gray-500 dark:text-gray-400">
+                            <span>{{ __('Tax') }}</span>
+                            <span>{{ number_format($sale->tax_total, 2) }}</span>
+                        </div>
+                    @endif
+                    <div class="flex justify-between font-semibold text-gray-900 dark:text-gray-100">
+                        <span>{{ __('Grand Total') }}</span>
+                        <span>{{ number_format($sale->grand_total, 2) }}</span>
+                    </div>
                 </div>
 
-                <div class="flex justify-end pt-2">
+                <div class="flex justify-end gap-3 pt-2">
+                    <a href="{{ route('sales.receipt', $sale) }}" target="_blank">
+                        <x-secondary-button type="button">{{ __('Print Receipt') }}</x-secondary-button>
+                    </a>
                     <x-secondary-button type="button" x-on:click="$dispatch('close')">{{ __('Close') }}</x-secondary-button>
                 </div>
             </div>

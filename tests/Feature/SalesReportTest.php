@@ -114,6 +114,22 @@ class SalesReportTest extends TestCase
         $this->assertEqualsWithDelta(46.7, $summary['margin_pct'], 0.1);
     }
 
+    public function test_tax_total_sums_correctly(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
+
+        $saleA = $this->makeSale($tenant, $branch, $owner, 115, 60);
+        $saleA->update(['tax_total' => 15]);
+        $saleB = $this->makeSale($tenant, $branch, $owner, 57.5, 20);
+        $saleB->update(['tax_total' => 7.5]);
+
+        $summary = Volt::test('pages.reports.sales')->get('summary');
+
+        $this->assertEquals(22.5, $summary['tax']);
+    }
+
     public function test_voided_sale_is_excluded_from_totals(): void
     {
         $tenant = Tenant::factory()->create();

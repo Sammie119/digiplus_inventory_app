@@ -98,6 +98,13 @@
                 @endif
             @endcan
 
+            @can('tenant-settings.manage')
+                <x-sidebar-link :href="route('tax-rates.index')" :active="request()->routeIs('tax-rates.index')" wire:navigate>
+                    <x-slot:icon><x-icon.percent /></x-slot:icon>
+                    {{ __('Tax Rates') }}
+                </x-sidebar-link>
+            @endcan
+
             @can('branches.manage')
                 <x-sidebar-link :href="route('branches.index')" :active="request()->routeIs('branches.index')" wire:navigate>
                     <x-slot:icon><x-icon.building /></x-slot:icon>

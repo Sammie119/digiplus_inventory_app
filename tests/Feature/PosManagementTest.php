@@ -158,6 +158,83 @@ class PosManagementTest extends TestCase
         ]);
     }
 
+    public function test_completing_a_sale_with_an_all_scoped_tax_rate_computes_tax_total(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
+
+        \App\Models\TaxRate::factory()->create(['tenant_id' => $tenant->id, 'name' => 'VAT', 'rate_percentage' => 15]);
+
+        $item = $this->makeItem($tenant, costPrice: 10, sellingPrice: 20);
+        $this->stockUp($tenant, $branch, $item, 15);
+
+        Volt::test('pages.pos.index')->set('opening_float', '100')->call('startShift');
+
+        // Subtotal 3*20=60, +15% VAT = 9, grand total 69.
+        $pos = Volt::test('pages.pos.index')
+            ->set('lines.0.item_id', $item->id)
+            ->set('lines.0.quantity', '3');
+
+        $this->assertEquals(9.0, $pos->get('taxTotal'));
+        $this->assertEquals(69.0, $pos->get('grandTotal'));
+
+        // Paying only the old subtotal (60) should fail now that tax applies.
+        $pos->set('payments.0.method', 'cash')->set('payments.0.amount', '60')
+            ->call('completeSale')
+            ->assertHasErrors(['payments']);
+
+        $pos->set('payments.0.amount', '69')->call('completeSale');
+
+        $sale = Sale::where('tenant_id', $tenant->id)->firstOrFail();
+        $this->assertEquals(60, $sale->subtotal);
+        $this->assertEquals(9, $sale->tax_total);
+        $this->assertEquals(69, $sale->grand_total);
+    }
+
+    public function test_category_scoped_tax_rate_only_taxes_matching_lines(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
+
+        $taxedCategory = Category::factory()->create(['tenant_id' => $tenant->id]);
+        $untaxedCategory = Category::factory()->create(['tenant_id' => $tenant->id]);
+
+        \App\Models\TaxRate::factory()->forCategory($taxedCategory->id)->create([
+            'tenant_id' => $tenant->id, 'name' => 'Luxury Tax', 'rate_percentage' => 10,
+        ]);
+
+        $taxedProduct = Product::factory()->create(['tenant_id' => $tenant->id, 'category_id' => $taxedCategory->id]);
+        $untaxedProduct = Product::factory()->create(['tenant_id' => $tenant->id, 'category_id' => $untaxedCategory->id]);
+        $unit = UnitOfMeasure::factory()->create(['tenant_id' => $tenant->id]);
+
+        $taxedItem = Item::factory()->create([
+            'tenant_id' => $tenant->id, 'product_id' => $taxedProduct->id, 'base_unit_id' => $unit->id,
+            'cost_price' => 10, 'selling_price' => 20,
+        ]);
+        $untaxedItem = Item::factory()->create([
+            'tenant_id' => $tenant->id, 'product_id' => $untaxedProduct->id, 'base_unit_id' => $unit->id,
+            'cost_price' => 10, 'selling_price' => 20,
+        ]);
+
+        $this->stockUp($tenant, $branch, $taxedItem, 10);
+        $this->stockUp($tenant, $branch, $untaxedItem, 10);
+
+        Volt::test('pages.pos.index')->set('opening_float', '100')->call('startShift');
+
+        // 1 taxed line (20, +10% = 2) + 1 untaxed line (20, +0) = subtotal 40, tax 2, grand 42.
+        $pos = Volt::test('pages.pos.index')
+            ->set('lines.0.item_id', $taxedItem->id)
+            ->set('lines.0.quantity', '1')
+            ->call('addLine')
+            ->set('lines.1.item_id', $untaxedItem->id)
+            ->set('lines.1.quantity', '1');
+
+        $this->assertEquals(2.0, $pos->get('taxTotal'));
+        $this->assertEquals(42.0, $pos->get('grandTotal'));
+    }
+
     public function test_split_tender_payments_must_sum_to_the_total(): void
     {
         $tenant = Tenant::factory()->create();

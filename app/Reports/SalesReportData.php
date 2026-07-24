@@ -29,12 +29,14 @@ class SalesReportData
     private static function summary($sales): array
     {
         $revenue = (float) $sales->sum('grand_total');
+        $tax = (float) $sales->sum('tax_total');
         $cost = (float) $sales->sum(fn ($sale) => $sale->items->sum(fn ($line) => $line->cost_at_sale * $line->quantity));
         $margin = $revenue - $cost;
 
         return [
             'count' => $sales->count(),
             'revenue' => $revenue,
+            'tax' => $tax,
             'cost' => $cost,
             'margin' => $margin,
             'margin_pct' => $revenue > 0 ? ($margin / $revenue) * 100 : 0,

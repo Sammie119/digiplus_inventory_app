@@ -104,10 +104,11 @@ new #[Layout('layouts.app')] class extends Component
             fputcsv($handle, [__('Period'), "{$from} to {$to}"]);
             fputcsv($handle, [__('Generated'), now()->toDateTimeString()]);
             fputcsv($handle, []);
-            fputcsv($handle, [__('Sales'), __('Revenue'), __('Cost'), __('Margin'), __('Margin %')]);
+            fputcsv($handle, [__('Sales'), __('Revenue'), __('Tax'), __('Cost'), __('Margin'), __('Margin %')]);
             fputcsv($handle, [
                 $summary['count'],
                 number_format($summary['revenue'], 2, '.', ''),
+                number_format($summary['tax'], 2, '.', ''),
                 number_format($summary['cost'], 2, '.', ''),
                 number_format($summary['margin'], 2, '.', ''),
                 number_format($summary['margin_pct'], 1, '.', ''),
@@ -189,7 +190,7 @@ new #[Layout('layouts.app')] class extends Component
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-4">
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Sales') }}</div>
                     <div class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ $this->summary['count'] }}</div>
@@ -197,6 +198,10 @@ new #[Layout('layouts.app')] class extends Component
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Revenue') }}</div>
                     <div class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format($this->summary['revenue'], 2) }}</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Tax') }}</div>
+                    <div class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format($this->summary['tax'], 2) }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Cost') }}</div>

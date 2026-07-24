@@ -29,6 +29,7 @@
         <tr>
             <td class="summary-label">{{ __('Sales') }}</td>
             <td class="summary-label">{{ __('Revenue') }}</td>
+            <td class="summary-label">{{ __('Tax') }}</td>
             <td class="summary-label">{{ __('Cost') }}</td>
             <td class="summary-label">{{ __('Margin') }}</td>
             <td class="summary-label">{{ __('Margin %') }}</td>
@@ -36,6 +37,7 @@
         <tr>
             <td class="summary-value">{{ $summary['count'] }}</td>
             <td class="summary-value">{{ number_format($summary['revenue'], 2) }}</td>
+            <td class="summary-value">{{ number_format($summary['tax'], 2) }}</td>
             <td class="summary-value">{{ number_format($summary['cost'], 2) }}</td>
             <td class="summary-value">{{ number_format($summary['margin'], 2) }}</td>
             <td class="summary-value">{{ number_format($summary['margin_pct'], 1) }}%</td>
