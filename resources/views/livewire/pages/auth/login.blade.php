@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Forms\LoginForm;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -20,7 +21,11 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        $default = Auth::user()->is_super_admin
+            ? route('super-admin.dashboard', absolute: false)
+            : route('dashboard', absolute: false);
+
+        $this->redirectIntended(default: $default, navigate: true);
     }
 }; ?>
 

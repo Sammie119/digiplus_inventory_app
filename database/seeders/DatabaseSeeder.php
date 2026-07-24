@@ -6,8 +6,10 @@ use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\Product;
+use App\Models\SubscriptionPlan;
 use App\Models\Supplier;
 use App\Models\Tenant;
+use App\Models\TenantSubscription;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -31,11 +33,31 @@ class DatabaseSeeder extends Seeder
             'is_super_admin' => true,
         ]);
 
+        // Platform-level subscription tiers (SRS §4.5 placeholder pricing —
+        // pending a real business/pricing decision).
+        $basicPlan = SubscriptionPlan::create([
+            'name' => 'Basic', 'max_branches' => 1, 'max_users' => 3, 'max_transactions_per_month' => 1000, 'price' => 29.00,
+        ]);
+        SubscriptionPlan::create([
+            'name' => 'Standard', 'max_branches' => 5, 'max_users' => 15, 'max_transactions_per_month' => 10000, 'price' => 99.00,
+        ]);
+        SubscriptionPlan::create([
+            'name' => 'Enterprise', 'max_branches' => 999, 'max_users' => 999, 'max_transactions_per_month' => 999999, 'price' => 299.00,
+        ]);
+
         // A demo tenant + branch + owner to log in and explore the app with.
         $tenant = Tenant::create([
             'name' => 'Demo Retail Co',
             'subdomain' => 'demo',
             'currency' => 'GHS',
+            'status' => 'active',
+        ]);
+
+        TenantSubscription::create([
+            'tenant_id' => $tenant->id,
+            'plan_id' => $basicPlan->id,
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->addMonth()->startOfMonth()->toDateString(),
             'status' => 'active',
         ]);
 

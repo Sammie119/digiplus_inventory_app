@@ -11,7 +11,13 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'super-admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Volt::route('/', 'pages.super-admin.dashboard')->name('dashboard');
+    Volt::route('tenants', 'pages.super-admin.tenants')->name('tenants.index');
+    Volt::route('subscription-plans', 'pages.super-admin.subscription-plans')->name('subscription-plans.index');
+});
+
+Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
     Volt::route('dashboard', 'pages.dashboard.index')->name('dashboard');
     Volt::route('reports/sales', 'pages.reports.sales')->name('reports.sales');
     Volt::route('reports/stock', 'pages.reports.stock')->name('reports.stock');
