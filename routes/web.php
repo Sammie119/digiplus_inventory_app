@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ItemBarcodeLabelController;
 use App\Http\Controllers\SaleReceiptController;
+use App\Http\Controllers\TenantBackupDownloadController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -24,6 +25,8 @@ Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
     Volt::route('reports/shifts', 'pages.reports.shifts')->name('reports.shifts');
     Volt::route('reports/scheduled', 'pages.reports.scheduled')->name('reports.scheduled');
     Volt::route('tax-rates', 'pages.tax-rates.index')->name('tax-rates.index');
+    Volt::route('backups', 'pages.backups.index')->name('backups.index');
+    Route::get('backups/{id}/download', TenantBackupDownloadController::class)->name('backups.download');
     Volt::route('branches', 'pages.branches.index')->name('branches.index');
     Volt::route('users', 'pages.users.index')->name('users.index');
     Volt::route('categories', 'pages.categories.index')->name('categories.index');

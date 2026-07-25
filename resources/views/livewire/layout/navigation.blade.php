@@ -103,6 +103,11 @@
                     <x-slot:icon><x-icon.percent /></x-slot:icon>
                     {{ __('Tax Rates') }}
                 </x-sidebar-link>
+
+                <x-sidebar-link :href="route('backups.index')" :active="request()->routeIs('backups.index')" wire:navigate>
+                    <x-slot:icon><x-icon.archive /></x-slot:icon>
+                    {{ __('Backups') }}
+                </x-sidebar-link>
             @endcan
 
             @can('branches.manage')
