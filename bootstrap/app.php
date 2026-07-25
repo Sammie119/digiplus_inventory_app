@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('reports:send-scheduled')->dailyAt('06:00');
         $schedule->command('subscriptions:send-renewal-reminders')->dailyAt('07:00');
         $schedule->command('backups:run-scheduled')->weeklyOn(1, '02:00');
+        $schedule->command('database:backup')->dailyAt('03:30');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

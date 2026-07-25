@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DatabaseBackupDownloadController;
 use App\Http\Controllers\ItemBarcodeLabelController;
 use App\Http\Controllers\SaleReceiptController;
 use App\Http\Controllers\TenantBackupDownloadController;
@@ -16,6 +17,8 @@ Route::middleware(['auth', 'verified', 'super-admin'])->prefix('super-admin')->n
     Volt::route('/', 'pages.super-admin.dashboard')->name('dashboard');
     Volt::route('tenants', 'pages.super-admin.tenants')->name('tenants.index');
     Volt::route('subscription-plans', 'pages.super-admin.subscription-plans')->name('subscription-plans.index');
+    Volt::route('database-backups', 'pages.super-admin.database-backups')->name('database-backups.index');
+    Route::get('database-backups/{databaseBackup}/download', DatabaseBackupDownloadController::class)->name('database-backups.download');
 });
 
 Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {

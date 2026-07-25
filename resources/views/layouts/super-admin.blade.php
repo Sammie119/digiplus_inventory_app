@@ -48,6 +48,9 @@
                                 <a href="{{ route('super-admin.subscription-plans.index') }}" wire:navigate class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('super-admin.subscription-plans.*') ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100' }}">
                                     {{ __('Subscription Plans') }}
                                 </a>
+                                <a href="{{ route('super-admin.database-backups.index') }}" wire:navigate class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('super-admin.database-backups.*') ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100' }}">
+                                    {{ __('Database Backups') }}
+                                </a>
                             </nav>
                         </div>
 
