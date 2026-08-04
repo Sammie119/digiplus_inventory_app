@@ -10,9 +10,12 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public ?int $userId = null;
     public string $name = '';
     public string $email = '';
@@ -36,7 +39,7 @@ new #[Layout('layouts.app')] class extends Component
             $query->where('branch_id', $actor->branch_id);
         }
 
-        return $query->orderBy('name')->get();
+        return $query->orderByDesc('id')->paginate(20);
     }
 
     #[Computed]
@@ -304,6 +307,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->users->links() }}
         </div>
     </div>
 

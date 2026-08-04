@@ -14,9 +14,12 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public const REASON_CODES = ['damage', 'write_off', 'return_to_supplier', 'count_correction', 'other'];
 
     public ?int $branch_id = null;
@@ -37,13 +40,13 @@ new #[Layout('layouts.app')] class extends Component
     {
         $actor = Auth::user();
 
-        $query = StockAdjustment::with(['item', 'branch', 'batch', 'requestedBy', 'approvedBy'])->latest();
+        $query = StockAdjustment::with(['item', 'branch', 'batch', 'requestedBy', 'approvedBy'])->orderByDesc('id');
 
         if (! $actor->hasRole('Business Owner')) {
             $query->where('branch_id', $actor->branch_id);
         }
 
-        return $query->get();
+        return $query->paginate(20);
     }
 
     #[Computed]
@@ -311,6 +314,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->adjustments->links() }}
         </div>
     </div>
 

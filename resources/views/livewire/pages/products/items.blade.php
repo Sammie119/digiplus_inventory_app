@@ -40,7 +40,7 @@ new #[Layout('layouts.app')] class extends Component
     #[Computed]
     public function items()
     {
-        return $this->product->items()->with('baseUnit')->orderBy('sku')->get();
+        return $this->product->items()->with('baseUnit')->orderByDesc('id')->get();
     }
 
     #[Computed]

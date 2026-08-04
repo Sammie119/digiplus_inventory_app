@@ -6,9 +6,12 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public ?int $supplierId = null;
     public string $name = '';
     public string $contact_person = '';
@@ -24,7 +27,7 @@ new #[Layout('layouts.app')] class extends Component
     #[Computed]
     public function suppliers()
     {
-        return Supplier::orderBy('name')->get();
+        return Supplier::orderByDesc('id')->paginate(20);
     }
 
     private function resetForm(): void
@@ -180,6 +183,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->suppliers->links() }}
         </div>
     </div>
 

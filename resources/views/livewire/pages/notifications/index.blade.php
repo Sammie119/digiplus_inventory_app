@@ -6,9 +6,12 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public const TYPE_LABELS = [
         'low_stock' => 'Low Stock',
         'large_discrepancy' => 'Large Discrepancy',
@@ -18,10 +21,17 @@ new #[Layout('layouts.app')] class extends Component
     public string $status = '';
     public string $type = '';
 
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['status', 'type'], true)) {
+            $this->resetPage();
+        }
+    }
+
     #[Computed]
     public function notifications()
     {
-        $query = Notification::where('user_id', Auth::id())->latest();
+        $query = Notification::where('user_id', Auth::id())->orderByDesc('id');
 
         if ($this->status === 'unread') {
             $query->whereNull('read_at');
@@ -33,7 +43,7 @@ new #[Layout('layouts.app')] class extends Component
             $query->where('type', $this->type);
         }
 
-        return $query->get();
+        return $query->paginate(20);
     }
 
     public function open(int $id): void
@@ -126,6 +136,8 @@ new #[Layout('layouts.app')] class extends Component
                     <p class="px-6 py-8 text-sm text-gray-500 dark:text-gray-400 text-center">{{ __('No notifications yet.') }}</p>
                 @endforelse
             </div>
+
+            {{ $this->notifications->links() }}
         </div>
     </div>
 </div>

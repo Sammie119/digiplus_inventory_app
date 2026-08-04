@@ -23,7 +23,7 @@ new #[Layout('layouts.app')] class extends Component
     {
         return TenantBackup::with('generatedBy')
             ->where('tenant_id', Auth::user()->tenant_id)
-            ->latest()
+            ->orderByDesc('id')
             ->get();
     }
 

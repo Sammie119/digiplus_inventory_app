@@ -26,7 +26,7 @@ new #[Layout('layouts.app')] class extends Component
     #[Computed]
     public function taxRates()
     {
-        return TaxRate::with('category')->where('tenant_id', Auth::user()->tenant_id)->orderBy('name')->get();
+        return TaxRate::with('category')->where('tenant_id', Auth::user()->tenant_id)->orderByDesc('id')->get();
     }
 
     #[Computed]

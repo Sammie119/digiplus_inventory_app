@@ -8,9 +8,12 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public string $search = '';
     public ?int $branch_id = null;
 
@@ -20,6 +23,13 @@ new #[Layout('layouts.app')] class extends Component
 
         $actor = Auth::user();
         $this->branch_id = $actor->hasRole('Business Owner') ? null : $actor->branch_id;
+    }
+
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['search', 'branch_id'], true)) {
+            $this->resetPage();
+        }
     }
 
     #[Computed]
@@ -39,7 +49,7 @@ new #[Layout('layouts.app')] class extends Component
     {
         $branchId = $this->branch_id;
 
-        $items = Item::with(['baseUnit', 'product', 'stockLevels' => function ($query) use ($branchId) {
+        return Item::with(['baseUnit', 'product', 'stockLevels' => function ($query) use ($branchId) {
             if ($branchId) {
                 $query->where('branch_id', $branchId);
             }
@@ -50,26 +60,25 @@ new #[Layout('layouts.app')] class extends Component
                         ->orWhereHas('product', fn ($p) => $p->where('name', 'like', '%'.$this->search.'%'));
                 });
             })
-            ->orderBy('sku')
-            ->get();
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->through(function (Item $item) use ($branchId) {
+                $onHand = (float) $item->stockLevels->sum('quantity_on_hand');
+                $reorderLevel = $branchId ? $item->reorderLevelForBranch($branchId) : $item->reorder_level;
 
-        return $items->map(function (Item $item) use ($branchId) {
-            $onHand = (float) $item->stockLevels->sum('quantity_on_hand');
-            $reorderLevel = $branchId ? $item->reorderLevelForBranch($branchId) : $item->reorder_level;
+                $status = match (true) {
+                    $onHand <= 0 => 'out',
+                    $onHand <= $reorderLevel => 'low',
+                    default => 'ok',
+                };
 
-            $status = match (true) {
-                $onHand <= 0 => 'out',
-                $onHand <= $reorderLevel => 'low',
-                default => 'ok',
-            };
-
-            return [
-                'item' => $item,
-                'on_hand' => $onHand,
-                'reorder_level' => $reorderLevel,
-                'status' => $status,
-            ];
-        });
+                return [
+                    'item' => $item,
+                    'on_hand' => $onHand,
+                    'reorder_level' => $reorderLevel,
+                    'status' => $status,
+                ];
+            });
     }
 
     public function batchRowsForItem(int $itemId)
@@ -191,6 +200,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->rows->links() }}
         </div>
     </div>
 

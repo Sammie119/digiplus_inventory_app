@@ -21,7 +21,7 @@ new #[Layout('layouts.app')] class extends Component
     #[Computed]
     public function units()
     {
-        return UnitOfMeasure::orderBy('name')->get();
+        return UnitOfMeasure::orderByDesc('id')->get();
     }
 
     public function openCreateModal(): void

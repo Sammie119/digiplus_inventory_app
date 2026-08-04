@@ -8,9 +8,12 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public ?int $customerId = null;
     public string $name = '';
     public string $phone = '';
@@ -27,7 +30,7 @@ new #[Layout('layouts.app')] class extends Component
     #[Computed]
     public function customers()
     {
-        return Customer::orderBy('name')->get();
+        return Customer::orderByDesc('id')->paginate(20);
     }
 
     private function resetForm(): void
@@ -212,6 +215,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->customers->links() }}
         </div>
     </div>
 
@@ -275,7 +280,7 @@ new #[Layout('layouts.app')] class extends Component
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            @forelse ($customer->ledgerEntries()->latest()->get() as $entry)
+                            @forelse ($customer->ledgerEntries()->orderByDesc('id')->get() as $entry)
                                 <tr>
                                     <td class="px-3 py-2 whitespace-nowrap text-gray-500 dark:text-gray-400">{{ $entry->created_at->format('d M Y, H:i') }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-gray-900 dark:text-gray-100">{{ ucfirst(str_replace('_', ' ', $entry->entry_type)) }}</td>

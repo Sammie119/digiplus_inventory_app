@@ -29,7 +29,7 @@ new #[Layout('layouts.super-admin')] class extends Component
             ->groupBy('plan_id')
             ->pluck('aggregate', 'plan_id');
 
-        return SubscriptionPlan::orderBy('price')->get()->map(function (SubscriptionPlan $plan) use ($subscriberCounts) {
+        return SubscriptionPlan::orderByDesc('id')->get()->map(function (SubscriptionPlan $plan) use ($subscriberCounts) {
             $plan->subscriber_count = $subscriberCounts->get($plan->id, 0);
 
             return $plan;

@@ -6,9 +6,12 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public function mount(): void
     {
         Gate::authorize('viewAny', Purchase::class);
@@ -19,13 +22,13 @@ new #[Layout('layouts.app')] class extends Component
     {
         $actor = Auth::user();
 
-        $query = Purchase::with(['branch', 'supplier'])->latest();
+        $query = Purchase::with(['branch', 'supplier'])->orderByDesc('id');
 
         if (! $actor->hasRole('Business Owner')) {
             $query->where('branch_id', $actor->branch_id);
         }
 
-        return $query->get();
+        return $query->paginate(20);
     }
 }; ?>
 
@@ -113,6 +116,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->purchases->links() }}
         </div>
     </div>
 </div>

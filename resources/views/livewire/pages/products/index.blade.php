@@ -7,9 +7,12 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public ?int $productId = null;
     public string $name = '';
     public ?int $category_id = null;
@@ -24,7 +27,7 @@ new #[Layout('layouts.app')] class extends Component
     #[Computed]
     public function products()
     {
-        return Product::with('category')->withCount('items')->orderBy('name')->get();
+        return Product::with('category')->withCount('items')->orderByDesc('id')->paginate(20);
     }
 
     #[Computed]
@@ -197,6 +200,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->products->links() }}
         </div>
     </div>
 

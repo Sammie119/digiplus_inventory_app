@@ -82,7 +82,7 @@ class StockLevelsTest extends TestCase
 
         $rows = Volt::test('pages.stock-levels.index')->get('rows');
 
-        $row = collect($rows)->firstWhere('item.id', $item->id);
+        $row = $rows->firstWhere('item.id', $item->id);
         $this->assertEquals(17, $row['on_hand']);
     }
 
@@ -101,7 +101,7 @@ class StockLevelsTest extends TestCase
             ->set('branch_id', $mainBranch->id)
             ->get('rows');
 
-        $row = collect($rows)->firstWhere('item.id', $item->id);
+        $row = $rows->firstWhere('item.id', $item->id);
         $this->assertEquals(10, $row['on_hand']);
     }
 
@@ -121,7 +121,7 @@ class StockLevelsTest extends TestCase
         $this->assertEquals($mainBranch->id, $component->get('branch_id'));
         $this->assertCount(1, $component->get('branchOptions'));
 
-        $row = collect($component->get('rows'))->firstWhere('item.id', $item->id);
+        $row = $component->get('rows')->firstWhere('item.id', $item->id);
         $this->assertEquals(10, $row['on_hand']);
     }
 
@@ -135,7 +135,7 @@ class StockLevelsTest extends TestCase
 
         $rows = Volt::test('pages.stock-levels.index')->get('rows');
 
-        $row = collect($rows)->firstWhere('item.id', $item->id);
+        $row = $rows->firstWhere('item.id', $item->id);
         $this->assertNotNull($row);
         $this->assertEquals(0, $row['on_hand']);
         $this->assertEquals('out', $row['status']);
@@ -155,8 +155,8 @@ class StockLevelsTest extends TestCase
 
         $rows = Volt::test('pages.stock-levels.index')->get('rows');
 
-        $this->assertEquals('low', collect($rows)->firstWhere('item.id', $lowItem->id)['status']);
-        $this->assertEquals('ok', collect($rows)->firstWhere('item.id', $okItem->id)['status']);
+        $this->assertEquals('low', $rows->firstWhere('item.id', $lowItem->id)['status']);
+        $this->assertEquals('ok', $rows->firstWhere('item.id', $okItem->id)['status']);
     }
 
     public function test_search_filters_by_sku(): void
@@ -176,7 +176,7 @@ class StockLevelsTest extends TestCase
             ->set('search', 'FIND-ME')
             ->get('rows');
 
-        $ids = collect($rows)->pluck('item.id')->all();
+        $ids = $rows->pluck('item.id')->all();
         $this->assertContains($matching->id, $ids);
         $this->assertNotContains($other->id, $ids);
     }

@@ -6,9 +6,12 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public function mount(): void
     {
         Gate::authorize('viewAny', StockTransfer::class);
@@ -19,7 +22,7 @@ new #[Layout('layouts.app')] class extends Component
     {
         $actor = Auth::user();
 
-        $query = StockTransfer::with(['fromBranch', 'toBranch', 'items'])->latest();
+        $query = StockTransfer::with(['fromBranch', 'toBranch', 'items'])->orderByDesc('id');
 
         if (! $actor->hasRole('Business Owner')) {
             $query->where(function ($q) use ($actor) {
@@ -28,7 +31,7 @@ new #[Layout('layouts.app')] class extends Component
             });
         }
 
-        return $query->get();
+        return $query->paginate(20);
     }
 }; ?>
 
@@ -125,6 +128,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->transfers->links() }}
         </div>
     </div>
 </div>

@@ -24,8 +24,7 @@ new #[Layout('layouts.app')] class extends Component
     public function branches()
     {
         return Branch::withCount('users')
-            ->orderByDesc('is_main_branch')
-            ->orderBy('name')
+            ->orderByDesc('id')
             ->get();
     }
 

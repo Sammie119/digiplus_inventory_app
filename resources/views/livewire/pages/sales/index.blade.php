@@ -12,9 +12,12 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public ?int $voidingSaleId = null;
     public string $voidReason = '';
 
@@ -32,13 +35,13 @@ new #[Layout('layouts.app')] class extends Component
     {
         $actor = Auth::user();
 
-        $query = Sale::with(['branch', 'cashier', 'customer', 'items.item', 'payments', 'returns.items.saleItem.item'])->latest();
+        $query = Sale::with(['branch', 'cashier', 'customer', 'items.item', 'payments', 'returns.items.saleItem.item'])->orderByDesc('id');
 
         if (! $actor->hasRole('Business Owner')) {
             $query->where('branch_id', $actor->branch_id);
         }
 
-        return $query->get();
+        return $query->paginate(20);
     }
 
     public function openVoidModal(int $saleId): void
@@ -360,6 +363,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->sales->links() }}
         </div>
     </div>
 

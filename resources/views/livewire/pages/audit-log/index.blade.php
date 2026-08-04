@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] class extends Component
 {
+    use WithPagination;
+
     public const MODEL_LABELS = [
         Sale::class => 'Sale',
         Purchase::class => 'Purchase',
@@ -38,6 +41,13 @@ new #[Layout('layouts.app')] class extends Component
         $this->to = now()->endOfMonth()->toDateString();
     }
 
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['from', 'to', 'action', 'model_type', 'user_id'], true)) {
+            $this->resetPage();
+        }
+    }
+
     #[Computed]
     public function userOptions()
     {
@@ -50,7 +60,7 @@ new #[Layout('layouts.app')] class extends Component
         $query = AuditLog::with('user')
             ->whereDate('created_at', '>=', $this->from ?: today())
             ->whereDate('created_at', '<=', $this->to ?: today())
-            ->latest();
+            ->orderByDesc('id');
 
         if ($this->action) {
             $query->where('action', $this->action);
@@ -64,7 +74,7 @@ new #[Layout('layouts.app')] class extends Component
             $query->where('user_id', $this->user_id);
         }
 
-        return $query->get();
+        return $query->paginate(20);
     }
 
     public function modelLabel(string $class): string
@@ -174,6 +184,8 @@ new #[Layout('layouts.app')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->logs->links() }}
         </div>
     </div>
 

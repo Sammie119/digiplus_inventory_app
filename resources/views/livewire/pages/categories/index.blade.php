@@ -22,7 +22,7 @@ new #[Layout('layouts.app')] class extends Component
     #[Computed]
     public function categories()
     {
-        return Category::with('parent')->orderBy('name')->get();
+        return Category::with('parent')->orderByDesc('id')->get();
     }
 
     #[Computed]

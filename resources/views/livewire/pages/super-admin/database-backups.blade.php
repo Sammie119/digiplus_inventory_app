@@ -15,7 +15,7 @@ new #[Layout('layouts.super-admin')] class extends Component
     #[Computed]
     public function backups()
     {
-        return DatabaseBackup::with('generatedBy')->latest()->get();
+        return DatabaseBackup::with('generatedBy')->orderByDesc('id')->get();
     }
 
     public function generate(GenerateDatabaseBackup $generateDatabaseBackup): void

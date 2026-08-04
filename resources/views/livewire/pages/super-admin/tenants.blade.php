@@ -13,9 +13,12 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.super-admin')] class extends Component
 {
+    use WithPagination;
+
     public ?int $subscriptionTenantId = null;
     public string $plan_id = '';
     public string $period_start = '';
@@ -35,9 +38,9 @@ new #[Layout('layouts.super-admin')] class extends Component
             ->pluck('aggregate', 'tenant_id');
 
         return Tenant::withCount('users')
-            ->orderBy('name')
-            ->get()
-            ->map(function (Tenant $tenant) use ($branchCounts) {
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->through(function (Tenant $tenant) use ($branchCounts) {
                 $tenant->branches_count = $branchCounts->get($tenant->id, 0);
 
                 $subscription = TenantSubscription::withoutTenantScope()
@@ -231,6 +234,8 @@ new #[Layout('layouts.super-admin')] class extends Component
                     </tbody>
                 </table>
             </div>
+
+            {{ $this->tenants->links() }}
         </div>
     </div>
 
