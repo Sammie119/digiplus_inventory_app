@@ -25,6 +25,7 @@ Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
     Volt::route('dashboard', 'pages.dashboard.index')->name('dashboard');
     Volt::route('reports/sales', 'pages.reports.sales')->name('reports.sales');
     Volt::route('reports/stock', 'pages.reports.stock')->name('reports.stock');
+    Volt::route('reports/velocity', 'pages.reports.velocity')->name('reports.velocity');
     Volt::route('reports/shifts', 'pages.reports.shifts')->name('reports.shifts');
     Volt::route('reports/scheduled', 'pages.reports.scheduled')->name('reports.scheduled');
     Volt::route('tax-rates', 'pages.tax-rates.index')->name('tax-rates.index');
