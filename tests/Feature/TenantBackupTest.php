@@ -149,6 +149,38 @@ class TenantBackupTest extends TestCase
         $this->assertDatabaseHas('tenant_backups', ['tenant_id' => $tenantB->id, 'generated_by' => null]);
     }
 
+    public function test_one_tenants_backup_failure_does_not_block_the_next_tenants_backup(): void
+    {
+        $brokenTenant = Tenant::factory()->create();
+        Branch::factory()->main()->create(['tenant_id' => $brokenTenant->id]);
+        $healthyTenant = Tenant::factory()->create();
+        Branch::factory()->main()->create(['tenant_id' => $healthyTenant->id]);
+
+        $brokenTenantId = $brokenTenant->id;
+
+        // Simulate a failure specific to the broken tenant (e.g. a disk
+        // error) while the healthy tenant's backup still generates
+        // normally -- delegates to the real action for every other tenant.
+        $this->app->bind(GenerateTenantBackup::class, fn () => new class($brokenTenantId) extends GenerateTenantBackup
+        {
+            public function __construct(private int $brokenTenantId) {}
+
+            public function __invoke(int $tenantId, ?int $generatedBy = null): TenantBackup
+            {
+                if ($tenantId === $this->brokenTenantId) {
+                    throw new \RuntimeException('Simulated backup failure');
+                }
+
+                return (new GenerateTenantBackup)($tenantId, $generatedBy);
+            }
+        });
+
+        $this->artisan(RunScheduledTenantBackups::class)->assertFailed();
+
+        $this->assertDatabaseMissing('tenant_backups', ['tenant_id' => $brokenTenant->id]);
+        $this->assertDatabaseHas('tenant_backups', ['tenant_id' => $healthyTenant->id, 'generated_by' => null]);
+    }
+
     public function test_generating_an_eleventh_backup_prunes_the_oldest(): void
     {
         $tenant = Tenant::factory()->create();

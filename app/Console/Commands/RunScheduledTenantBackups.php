@@ -6,6 +6,7 @@ use App\Actions\Backups\GenerateTenantBackup;
 use App\Models\Tenant;
 use App\Support\CurrentTenant;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class RunScheduledTenantBackups extends Command
 {
@@ -15,16 +16,29 @@ class RunScheduledTenantBackups extends Command
 
     public function handle(GenerateTenantBackup $generateTenantBackup): int
     {
+        $failures = 0;
+
         foreach (Tenant::all() as $tenant) {
-            CurrentTenant::set($tenant->id);
+            try {
+                CurrentTenant::set($tenant->id);
 
-            $generateTenantBackup($tenant->id);
+                $generateTenantBackup($tenant->id);
 
-            CurrentTenant::clear();
+                $this->info("Generated backup for {$tenant->name}.");
+            } catch (\Throwable $e) {
+                $failures++;
 
-            $this->info("Generated backup for {$tenant->name}.");
+                Log::error('Scheduled tenant backup failed', [
+                    'tenant_id' => $tenant->id,
+                    'exception' => $e,
+                ]);
+
+                $this->error("Failed to generate backup for tenant {$tenant->id}: {$e->getMessage()}");
+            } finally {
+                CurrentTenant::clear();
+            }
         }
 
-        return self::SUCCESS;
+        return $failures > 0 ? self::FAILURE : self::SUCCESS;
     }
 }

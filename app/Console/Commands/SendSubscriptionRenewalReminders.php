@@ -6,6 +6,7 @@ use App\Mail\SubscriptionRenewalReminderMail;
 use App\Models\TenantSubscription;
 use App\Support\CurrentTenant;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -23,23 +24,37 @@ class SendSubscriptionRenewalReminders extends Command
             ->whereBetween('period_end', [now()->toDateString(), now()->addDays(7)->toDateString()])
             ->get();
 
+        $failures = 0;
+
         foreach ($subscriptions as $subscription) {
-            CurrentTenant::set($subscription->tenant_id);
-            app(PermissionRegistrar::class)->setPermissionsTeamId($subscription->tenant_id);
+            try {
+                CurrentTenant::set($subscription->tenant_id);
+                app(PermissionRegistrar::class)->setPermissionsTeamId($subscription->tenant_id);
 
-            $owners = $subscription->tenant->users()
-                ->whereHas('roles', fn ($q) => $q->where('name', 'Business Owner'))
-                ->get();
+                $owners = $subscription->tenant->users()
+                    ->whereHas('roles', fn ($q) => $q->where('name', 'Business Owner'))
+                    ->get();
 
-            foreach ($owners as $owner) {
-                Mail::to($owner->email)->send(new SubscriptionRenewalReminderMail($subscription));
+                foreach ($owners as $owner) {
+                    Mail::to($owner->email)->send(new SubscriptionRenewalReminderMail($subscription));
+                }
+
+                $this->info("Sent renewal reminder for {$subscription->tenant->name} to {$owners->count()} owner(s).");
+            } catch (\Throwable $e) {
+                $failures++;
+
+                Log::error('Subscription renewal reminder failed', [
+                    'subscription_id' => $subscription->id,
+                    'tenant_id' => $subscription->tenant_id,
+                    'exception' => $e,
+                ]);
+
+                $this->error("Failed to send renewal reminder for tenant {$subscription->tenant_id}: {$e->getMessage()}");
+            } finally {
+                CurrentTenant::clear();
             }
-
-            CurrentTenant::clear();
-
-            $this->info("Sent renewal reminder for {$subscription->tenant->name} to {$owners->count()} owner(s).");
         }
 
-        return self::SUCCESS;
+        return $failures > 0 ? self::FAILURE : self::SUCCESS;
     }
 }

@@ -217,4 +217,39 @@ class ScheduledReportTest extends TestCase
         $this->assertTrue($notDueWeekly->last_sent_at->diffInSeconds(now()->subDays(3)) < 2);
         $this->assertTrue($dueWeekly->last_sent_at->greaterThan(now()->subMinute()));
     }
+
+    public function test_one_tenants_failure_does_not_block_the_next_tenants_report(): void
+    {
+        $brokenTenant = Tenant::factory()->create();
+        Branch::factory()->main()->create(['tenant_id' => $brokenTenant->id]);
+        $broken = ScheduledReport::factory()->create([
+            'tenant_id' => $brokenTenant->id, 'branch_id' => null, 'frequency' => 'daily', 'last_sent_at' => null,
+            'recipients' => ['solo@example.test'],
+        ]);
+
+        $healthyTenant = Tenant::factory()->create();
+        Branch::factory()->main()->create(['tenant_id' => $healthyTenant->id]);
+        $healthy = ScheduledReport::factory()->create([
+            'tenant_id' => $healthyTenant->id, 'branch_id' => null, 'frequency' => 'daily', 'last_sent_at' => null,
+            'recipients' => ['ok@example.test'],
+        ]);
+
+        // Simulate a failure specific to $broken's mail (e.g. a bad SMTP
+        // response) while the healthy schedule's mail sends normally --
+        // Mail::fake() can't throw selectively, so this uses a targeted
+        // Mockery expectation keyed on the Mailable's own $schedule.
+        Mail::shouldReceive('to')->andReturnSelf();
+        Mail::shouldReceive('send')->andReturnUsing(function ($mailable) use ($broken) {
+            if ($mailable->schedule->is($broken)) {
+                throw new \RuntimeException('Simulated mail failure');
+            }
+
+            return true;
+        });
+
+        $this->artisan(SendScheduledReports::class)->assertFailed();
+
+        $this->assertNull($broken->fresh()->last_sent_at);
+        $this->assertNotNull($healthy->fresh()->last_sent_at);
+    }
 }
