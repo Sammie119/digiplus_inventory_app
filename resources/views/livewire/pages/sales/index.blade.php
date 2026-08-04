@@ -279,7 +279,14 @@ new #[Layout('layouts.app')] class extends Component
                                 <div class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ $sale->receipt_number }}</div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ $sale->branch->name }} &middot; {{ $sale->cashier->name }}</div>
                             </div>
-                            <x-sale-status-badge :sale="$sale" />
+                            <div class="shrink-0 flex items-center">
+                                <x-sale-status-badge :sale="$sale" />
+                                @if ($sale->offline_flagged_oversell)
+                                    <span title="{{ __('Oversold while offline — needs stock review') }}" class="inline-block ml-1">
+                                        <x-icon.alert-circle class="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                                    </span>
+                                @endif
+                            </div>
                         </div>
                         <div class="mt-3 flex items-center justify-between">
                             <span class="text-sm text-gray-900 dark:text-gray-100 font-medium">{{ number_format($sale->grand_total, 2) }}</span>
@@ -311,7 +318,14 @@ new #[Layout('layouts.app')] class extends Component
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $sale->receipt_number }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $sale->branch->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $sale->cashier->name }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm"><x-sale-status-badge :sale="$sale" /></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <x-sale-status-badge :sale="$sale" />
+                                    @if ($sale->offline_flagged_oversell)
+                                        <span title="{{ __('Oversold while offline — needs stock review') }}" class="inline-block ml-1 align-text-bottom">
+                                            <x-icon.alert-circle class="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ number_format($sale->grand_total, 2) }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $sale->created_at->format('d M Y, H:i') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
@@ -354,7 +368,14 @@ new #[Layout('layouts.app')] class extends Component
             <div class="p-6 space-y-4 text-sm">
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $sale->receipt_number }}</h2>
-                    <x-sale-status-badge :sale="$sale" />
+                    <div class="flex items-center">
+                        <x-sale-status-badge :sale="$sale" />
+                        @if ($sale->offline_flagged_oversell)
+                            <span title="{{ __('Oversold while offline — needs stock review') }}" class="inline-block ml-1">
+                                <x-icon.alert-circle class="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                            </span>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-500 dark:text-gray-400">
