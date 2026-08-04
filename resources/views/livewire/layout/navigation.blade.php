@@ -68,110 +68,124 @@
                 </x-sidebar-link>
             @endcan
 
-            @can('reports.view')
-                <x-sidebar-link :href="route('reports.sales')" :active="request()->routeIs('reports.sales')" wire:navigate>
-                    <x-slot:icon><x-icon.trending-up /></x-slot:icon>
-                    {{ __('Sales Report') }}
-                </x-sidebar-link>
-            @endcan
-
-            @can('reports.view')
-                <x-sidebar-link :href="route('reports.stock')" :active="request()->routeIs('reports.stock')" wire:navigate>
-                    <x-slot:icon><x-icon.archive /></x-slot:icon>
-                    {{ __('Stock Report') }}
-                </x-sidebar-link>
-            @endcan
-
-            @can('reports.view')
-                <x-sidebar-link :href="route('reports.shifts')" :active="request()->routeIs('reports.shifts')" wire:navigate>
-                    <x-slot:icon><x-icon.clock /></x-slot:icon>
-                    {{ __('Shift Report') }}
-                </x-sidebar-link>
-            @endcan
-
-            @can('reports.view')
-                @if (auth()->user()->hasRole(['Business Owner', 'Branch Manager']))
-                    <x-sidebar-link :href="route('reports.scheduled')" :active="request()->routeIs('reports.scheduled')" wire:navigate>
-                        <x-slot:icon><x-icon.mail /></x-slot:icon>
-                        {{ __('Scheduled Reports') }}
-                    </x-sidebar-link>
-                @endif
-            @endcan
-
-            @can('tenant-settings.manage')
-                <x-sidebar-link :href="route('tax-rates.index')" :active="request()->routeIs('tax-rates.index')" wire:navigate>
-                    <x-slot:icon><x-icon.percent /></x-slot:icon>
-                    {{ __('Tax Rates') }}
-                </x-sidebar-link>
-
-                <x-sidebar-link :href="route('backups.index')" :active="request()->routeIs('backups.index')" wire:navigate>
-                    <x-slot:icon><x-icon.archive /></x-slot:icon>
-                    {{ __('Backups') }}
-                </x-sidebar-link>
-            @endcan
-
-            @can('branches.manage')
-                <x-sidebar-link :href="route('branches.index')" :active="request()->routeIs('branches.index')" wire:navigate>
-                    <x-slot:icon><x-icon.building /></x-slot:icon>
-                    {{ __('Branches') }}
-                </x-sidebar-link>
-            @endcan
-
-            @can('users.manage')
-                <x-sidebar-link :href="route('users.index')" :active="request()->routeIs('users.index')" wire:navigate>
-                    <x-slot:icon><x-icon.users /></x-slot:icon>
-                    {{ __('Users') }}
-                </x-sidebar-link>
-            @endcan
-
-            @can('audit.view')
-                <x-sidebar-link :href="route('audit-log.index')" :active="request()->routeIs('audit-log.*')" wire:navigate>
-                    <x-slot:icon><x-icon.shield-check /></x-slot:icon>
-                    {{ __('Audit Log') }}
-                </x-sidebar-link>
-            @endcan
-
             @can('stock.view')
-                <x-sidebar-link :href="route('products.index')" :active="request()->routeIs('products.*', 'categories.*', 'units-of-measure.*')" wire:navigate>
+                <x-sidebar-group
+                    :label="__('Inventory')"
+                    :active="request()->routeIs('products.*', 'categories.*', 'units-of-measure.*', 'stock-levels.*', 'suppliers.*', 'purchases.*', 'stock-adjustments.*', 'stock-transfers.*')"
+                >
                     <x-slot:icon><x-icon.box /></x-slot:icon>
-                    {{ __('Products') }}
-                </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('products.index')" :active="request()->routeIs('products.*', 'categories.*', 'units-of-measure.*')" wire:navigate>
+                        <x-slot:icon><x-icon.box /></x-slot:icon>
+                        {{ __('Products') }}
+                    </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('stock-levels.index')" :active="request()->routeIs('stock-levels.*')" wire:navigate>
+                        <x-slot:icon><x-icon.chart-bar /></x-slot:icon>
+                        {{ __('Stock Levels') }}
+                    </x-sidebar-link>
+
+                    @can('suppliers.view')
+                        <x-sidebar-link :href="route('suppliers.index')" :active="request()->routeIs('suppliers.*')" wire:navigate>
+                            <x-slot:icon><x-icon.truck /></x-slot:icon>
+                            {{ __('Suppliers') }}
+                        </x-sidebar-link>
+                    @endcan
+
+                    <x-sidebar-link :href="route('purchases.index')" :active="request()->routeIs('purchases.*')" wire:navigate>
+                        <x-slot:icon><x-icon.clipboard-list /></x-slot:icon>
+                        {{ __('Purchases') }}
+                    </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('stock-adjustments.index')" :active="request()->routeIs('stock-adjustments.*')" wire:navigate>
+                        <x-slot:icon><x-icon.adjustments /></x-slot:icon>
+                        {{ __('Stock Adjustments') }}
+                    </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('stock-transfers.index')" :active="request()->routeIs('stock-transfers.*')" wire:navigate>
+                        <x-slot:icon><x-icon.transfer /></x-slot:icon>
+                        {{ __('Stock Transfers') }}
+                    </x-sidebar-link>
+                </x-sidebar-group>
             @endcan
 
-            @can('stock.view')
-                <x-sidebar-link :href="route('stock-levels.index')" :active="request()->routeIs('stock-levels.*')" wire:navigate>
-                    <x-slot:icon><x-icon.chart-bar /></x-slot:icon>
-                    {{ __('Stock Levels') }}
-                </x-sidebar-link>
+            @can('reports.view')
+                <x-sidebar-group
+                    :label="__('Reports')"
+                    :active="request()->routeIs('reports.*')"
+                >
+                    <x-slot:icon><x-icon.trending-up /></x-slot:icon>
+
+                    <x-sidebar-link :href="route('reports.sales')" :active="request()->routeIs('reports.sales')" wire:navigate>
+                        <x-slot:icon><x-icon.trending-up /></x-slot:icon>
+                        {{ __('Sales Report') }}
+                    </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('reports.stock')" :active="request()->routeIs('reports.stock')" wire:navigate>
+                        <x-slot:icon><x-icon.archive /></x-slot:icon>
+                        {{ __('Stock Report') }}
+                    </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('reports.velocity')" :active="request()->routeIs('reports.velocity')" wire:navigate>
+                        <x-slot:icon><x-icon.trending-up /></x-slot:icon>
+                        {{ __('Item Velocity') }}
+                    </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('reports.shifts')" :active="request()->routeIs('reports.shifts')" wire:navigate>
+                        <x-slot:icon><x-icon.clock /></x-slot:icon>
+                        {{ __('Shift Report') }}
+                    </x-sidebar-link>
+
+                    @if (auth()->user()->hasRole(['Business Owner', 'Branch Manager']))
+                        <x-sidebar-link :href="route('reports.scheduled')" :active="request()->routeIs('reports.scheduled')" wire:navigate>
+                            <x-slot:icon><x-icon.mail /></x-slot:icon>
+                            {{ __('Scheduled Reports') }}
+                        </x-sidebar-link>
+                    @endif
+                </x-sidebar-group>
             @endcan
 
-            @can('suppliers.view')
-                <x-sidebar-link :href="route('suppliers.index')" :active="request()->routeIs('suppliers.*')" wire:navigate>
-                    <x-slot:icon><x-icon.truck /></x-slot:icon>
-                    {{ __('Suppliers') }}
-                </x-sidebar-link>
-            @endcan
+            @if (auth()->user()->can('tenant-settings.manage') || auth()->user()->can('branches.manage') || auth()->user()->can('users.manage') || auth()->user()->can('audit.view'))
+                <x-sidebar-group
+                    :label="__('Administration')"
+                    :active="request()->routeIs('tax-rates.*', 'backups.*', 'branches.*', 'users.*', 'audit-log.*')"
+                >
+                    <x-slot:icon><x-icon.shield-check /></x-slot:icon>
 
-            @can('stock.view')
-                <x-sidebar-link :href="route('purchases.index')" :active="request()->routeIs('purchases.*')" wire:navigate>
-                    <x-slot:icon><x-icon.clipboard-list /></x-slot:icon>
-                    {{ __('Purchases') }}
-                </x-sidebar-link>
-            @endcan
+                    @can('tenant-settings.manage')
+                        <x-sidebar-link :href="route('tax-rates.index')" :active="request()->routeIs('tax-rates.index')" wire:navigate>
+                            <x-slot:icon><x-icon.percent /></x-slot:icon>
+                            {{ __('Tax Rates') }}
+                        </x-sidebar-link>
 
-            @can('stock.view')
-                <x-sidebar-link :href="route('stock-adjustments.index')" :active="request()->routeIs('stock-adjustments.*')" wire:navigate>
-                    <x-slot:icon><x-icon.adjustments /></x-slot:icon>
-                    {{ __('Stock Adjustments') }}
-                </x-sidebar-link>
-            @endcan
+                        <x-sidebar-link :href="route('backups.index')" :active="request()->routeIs('backups.index')" wire:navigate>
+                            <x-slot:icon><x-icon.archive /></x-slot:icon>
+                            {{ __('Backups') }}
+                        </x-sidebar-link>
+                    @endcan
 
-            @can('stock.view')
-                <x-sidebar-link :href="route('stock-transfers.index')" :active="request()->routeIs('stock-transfers.*')" wire:navigate>
-                    <x-slot:icon><x-icon.transfer /></x-slot:icon>
-                    {{ __('Stock Transfers') }}
-                </x-sidebar-link>
-            @endcan
+                    @can('branches.manage')
+                        <x-sidebar-link :href="route('branches.index')" :active="request()->routeIs('branches.index')" wire:navigate>
+                            <x-slot:icon><x-icon.building /></x-slot:icon>
+                            {{ __('Branches') }}
+                        </x-sidebar-link>
+                    @endcan
+
+                    @can('users.manage')
+                        <x-sidebar-link :href="route('users.index')" :active="request()->routeIs('users.index')" wire:navigate>
+                            <x-slot:icon><x-icon.users /></x-slot:icon>
+                            {{ __('Users') }}
+                        </x-sidebar-link>
+                    @endcan
+
+                    @can('audit.view')
+                        <x-sidebar-link :href="route('audit-log.index')" :active="request()->routeIs('audit-log.*')" wire:navigate>
+                            <x-slot:icon><x-icon.shield-check /></x-slot:icon>
+                            {{ __('Audit Log') }}
+                        </x-sidebar-link>
+                    @endcan
+                </x-sidebar-group>
+            @endif
         </nav>
     </aside>
 </div>
