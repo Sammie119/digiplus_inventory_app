@@ -129,15 +129,19 @@ new #[Layout('layouts.app')] class extends Component
     }
 
     #[Computed]
-    public function offlineCatalog(): array
+    public function onHandByItem()
     {
         $actor = Auth::user();
 
-        $onHandByItem = StockLevel::where('branch_id', $actor->branch_id)
+        return StockLevel::where('branch_id', $actor->branch_id)
             ->selectRaw('item_id, sum(quantity_on_hand) as total')
             ->groupBy('item_id')
             ->pluck('total', 'item_id');
+    }
 
+    #[Computed]
+    public function offlineCatalog(): array
+    {
         return $this->itemOptions
             ->map(fn (Item $item) => [
                 'id' => $item->id,
@@ -145,7 +149,7 @@ new #[Layout('layouts.app')] class extends Component
                 'barcode' => $item->barcode,
                 'label' => $item->sku.' ('.$item->baseUnit->abbreviation.')',
                 'price' => (float) $item->selling_price,
-                'on_hand' => (float) ($onHandByItem[$item->id] ?? 0),
+                'on_hand' => (float) ($this->onHandByItem[$item->id] ?? 0),
             ])
             ->values()
             ->all();
@@ -599,25 +603,20 @@ new #[Layout('layouts.app')] class extends Component
                     <div>
                         <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Items') }}</h3>
 
-                        <div class="space-y-4">
-                            @foreach ($lines as $index => $line)
-                                <div wire:key="line-{{ $index }}" class="border border-gray-200 dark:border-gray-700 rounded-md p-4">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Line') }} {{ $index + 1 }}</span>
-                                        @if (count($lines) > 1)
-                                            <button
-                                                type="button"
-                                                title="{{ __('Remove line') }}"
-                                                aria-label="{{ __('Remove line') }}"
-                                                wire:click="removeLine({{ $index }})"
-                                                class="inline-flex items-center justify-center p-1.5 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40"
-                                            ><x-icon.trash class="h-4 w-4" /></button>
-                                        @endif
-                                    </div>
+                        <div class="hidden sm:grid sm:grid-cols-12 gap-3 px-1">
+                            <div class="sm:col-span-7"><x-input-label :value="__('Item')" /></div>
+                            <div class="sm:col-span-1"><x-input-label :value="__('Stock')" /></div>
+                            <div class="sm:col-span-2"><x-input-label :value="__('Quantity')" /></div>
+                            <div class="sm:col-span-1"><x-input-label :value="__('Total')" /></div>
+                            <div class="sm:col-span-1"></div>
+                        </div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                                        <div class="sm:col-span-2">
-                                            <x-input-label :value="__('Item')" />
+                        <div class="space-y-4 mt-1">
+                            @foreach ($lines as $index => $line)
+                                <div wire:key="line-{{ $index }}" class="border border-gray-200 dark:border-gray-700 rounded-md p-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:items-center">
+                                        <div class="sm:col-span-7">
+                                            <x-input-label :value="__('Item')" class="sm:hidden" />
                                             <x-searchable-select
                                                 :options="$this->itemSelectOptions"
                                                 :wire-model="'lines.'.$index.'.item_id'"
@@ -626,24 +625,37 @@ new #[Layout('layouts.app')] class extends Component
                                             <x-input-error :messages="$errors->get('lines.'.$index.'.item_id')" class="mt-2" />
                                         </div>
 
-                                        <div>
-                                            <x-input-label :value="__('Quantity')" />
-                                            <x-text-input wire:model.live="lines.{{ $index }}.quantity" class="block mt-1 w-full" type="number" step="0.001" min="0" />
+                                        <div class="sm:col-span-1">
+                                            <x-input-label :value="__('Stock')" class="sm:hidden" />
+                                            <p class="mt-1 sm:mt-0 py-2 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ rtrim(rtrim(number_format($this->onHandByItem[$line['item_id']] ?? 0, 3), '0'), '.') }}
+                                            </p>
+                                        </div>
+
+                                        <div class="sm:col-span-2">
+                                            <x-input-label :value="__('Quantity')" class="sm:hidden" />
+                                            <x-text-input wire:model.live="lines.{{ $index }}.quantity" class="block mt-1 sm:mt-0 w-full" type="number" step="0.001" min="0" />
                                             <x-input-error :messages="$errors->get('lines.'.$index.'.quantity')" class="mt-2" />
                                         </div>
 
-                                        @if ($this->itemTracksBatches($line['item_id']))
-                                            <div>
-                                                <x-input-label :value="__('Batch (optional)')" />
-                                                <select wire:model="lines.{{ $index }}.batch_id" class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full">
-                                                    <option value="">{{ __('Auto (FEFO)') }}</option>
-                                                    @foreach ($this->batchOptionsForItem($line['item_id']) as $batch)
-                                                        <option value="{{ $batch->id }}">{{ $batch->batch_number }}</option>
-                                                    @endforeach
-                                                </select>
-                                                <x-input-error :messages="$errors->get('lines.'.$index.'.batch_id')" class="mt-2" />
-                                            </div>
-                                        @endif
+                                        <div class="sm:col-span-1">
+                                            <x-input-label :value="__('Total')" class="sm:hidden" />
+                                            <p class="mt-1 sm:mt-0 py-2 text-sm text-gray-900 dark:text-gray-100">
+                                                {{ number_format((float) ($line['quantity'] ?? 0) * (float) optional($this->itemOptions->firstWhere('id', $line['item_id']))->selling_price, 2) }}
+                                            </p>
+                                        </div>
+
+                                        <div class="sm:col-span-1 flex justify-end sm:justify-center">
+                                            @if (count($lines) > 1)
+                                                <button
+                                                    type="button"
+                                                    title="{{ __('Remove line') }}"
+                                                    aria-label="{{ __('Remove line') }}"
+                                                    wire:click="removeLine({{ $index }})"
+                                                    class="inline-flex items-center justify-center p-1.5 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40"
+                                                ><x-icon.trash class="h-4 w-4" /></button>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
