@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Sales\RecordSale;
+use App\Mail\ShiftClosedSummaryMail;
 use App\Models\Batch;
 use App\Models\Customer;
 use App\Models\Item;
@@ -11,6 +12,8 @@ use App\Models\StockLevel;
 use App\Support\SaleTaxCalculator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -447,6 +450,8 @@ new #[Layout('layouts.app')] class extends Component
             'closed_at' => now(),
         ]);
 
+        $this->sendShiftClosedSummary($shift, $expectedCash, $variance, (float) $validated['closing_float_counted']);
+
         $this->lastExpectedCash = $expectedCash;
         $this->lastVariance = $variance;
         $this->closing_float_counted = '';
@@ -458,6 +463,49 @@ new #[Layout('layouts.app')] class extends Component
 
         $this->js("window.dispatchEvent(new CustomEvent('close-modal', { detail: 'confirm-close-shift' }))");
         $this->dispatch('toast', message: __('Shift closed.'), type: 'success');
+    }
+
+    private function sendShiftClosedSummary(Shift $shift, float $expectedCash, float $variance, float $closingFloatCounted): void
+    {
+        try {
+            $owners = $shift->cashier->tenant->users()
+                ->whereHas('roles', fn ($q) => $q->where('name', 'Business Owner'))
+                ->get();
+
+            if ($owners->isEmpty()) {
+                return;
+            }
+
+            $paymentTotals = Payment::whereHas('sale', fn ($q) => $q->where('shift_id', $shift->id))
+                ->selectRaw('payment_method, SUM(amount) as total')
+                ->groupBy('payment_method')
+                ->pluck('total', 'payment_method');
+
+            $completedSales = Sale::where('shift_id', $shift->id)->where('status', 'completed');
+
+            $summary = [
+                'cashier_name' => $shift->cashier->name,
+                'branch_name' => $shift->branch->name,
+                'opened_at' => $shift->opened_at,
+                'closed_at' => $shift->closed_at,
+                'sales_count' => $completedSales->count(),
+                'total_sales' => (float) $completedSales->sum('grand_total'),
+                'cash_total' => (float) ($paymentTotals['cash'] ?? 0),
+                'mobile_money_total' => (float) ($paymentTotals['mobile_money'] ?? 0),
+                'card_total' => (float) ($paymentTotals['card'] ?? 0),
+                'credit_total' => (float) ($paymentTotals['credit'] ?? 0),
+                'opening_float' => (float) $shift->opening_float,
+                'expected_cash' => $expectedCash,
+                'closing_float_counted' => $closingFloatCounted,
+                'variance' => $variance,
+            ];
+
+            foreach ($owners as $owner) {
+                Mail::to($owner->email)->send(new ShiftClosedSummaryMail($shift, $summary));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Shift closed summary email failed', ['shift_id' => $shift->id, 'exception' => $e]);
+        }
     }
 }; ?>
 

@@ -76,7 +76,7 @@ class PosManagementTest extends TestCase
 
     public function test_cashier_can_open_a_shift(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -95,7 +95,7 @@ class PosManagementTest extends TestCase
 
     public function test_cashier_cannot_open_a_second_shift_while_one_is_open(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -109,7 +109,7 @@ class PosManagementTest extends TestCase
 
     public function test_completing_a_sale_with_cash_payment_deducts_stock_and_creates_records(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -160,7 +160,7 @@ class PosManagementTest extends TestCase
 
     public function test_completing_a_sale_with_an_all_scoped_tax_rate_computes_tax_total(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -190,11 +190,19 @@ class PosManagementTest extends TestCase
         $this->assertEquals(60, $sale->subtotal);
         $this->assertEquals(9, $sale->tax_total);
         $this->assertEquals(69, $sale->grand_total);
+
+        $this->assertCount(1, $sale->taxLines);
+        $this->assertDatabaseHas('sale_tax_lines', [
+            'sale_id' => $sale->id,
+            'name' => 'VAT',
+            'rate_percentage' => 15,
+            'amount' => 9,
+        ]);
     }
 
     public function test_category_scoped_tax_rate_only_taxes_matching_lines(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -235,9 +243,49 @@ class PosManagementTest extends TestCase
         $this->assertEquals(42.0, $pos->get('grandTotal'));
     }
 
+    public function test_multiple_simultaneous_tax_rates_each_persist_their_own_breakdown_line(): void
+    {
+        $tenant = Tenant::factory()->licensed()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
+
+        $taxedCategory = Category::factory()->create(['tenant_id' => $tenant->id]);
+
+        \App\Models\TaxRate::factory()->create([
+            'tenant_id' => $tenant->id, 'name' => 'VAT', 'rate_percentage' => 15, 'applies_to' => 'all',
+        ]);
+        \App\Models\TaxRate::factory()->forCategory($taxedCategory->id)->create([
+            'tenant_id' => $tenant->id, 'name' => 'Luxury Tax', 'rate_percentage' => 10,
+        ]);
+
+        $product = Product::factory()->create(['tenant_id' => $tenant->id, 'category_id' => $taxedCategory->id]);
+        $unit = UnitOfMeasure::factory()->create(['tenant_id' => $tenant->id]);
+        $item = Item::factory()->create([
+            'tenant_id' => $tenant->id, 'product_id' => $product->id, 'base_unit_id' => $unit->id,
+            'cost_price' => 10, 'selling_price' => 20,
+        ]);
+        $this->stockUp($tenant, $branch, $item, 10);
+
+        Volt::test('pages.pos.index')->set('opening_float', '100')->call('startShift');
+
+        // Subtotal 20, +15% VAT (3) +10% Luxury Tax (2) = tax 5, grand 25.
+        $pos = Volt::test('pages.pos.index')
+            ->set('lines.0.item_id', $item->id)
+            ->set('lines.0.quantity', '1')
+            ->set('payments.0.method', 'cash')
+            ->set('payments.0.amount', '25')
+            ->call('completeSale');
+
+        $sale = Sale::where('tenant_id', $tenant->id)->firstOrFail();
+        $this->assertEquals(5, $sale->tax_total);
+        $this->assertCount(2, $sale->taxLines);
+        $this->assertDatabaseHas('sale_tax_lines', ['sale_id' => $sale->id, 'name' => 'VAT', 'amount' => 3]);
+        $this->assertDatabaseHas('sale_tax_lines', ['sale_id' => $sale->id, 'name' => 'Luxury Tax', 'amount' => 2]);
+    }
+
     public function test_split_tender_payments_must_sum_to_the_total(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -264,7 +312,7 @@ class PosManagementTest extends TestCase
 
     public function test_mismatched_payment_total_fails_validation_with_no_mutation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -286,7 +334,7 @@ class PosManagementTest extends TestCase
 
     public function test_fefo_auto_selects_earliest_expiry_batch(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -319,7 +367,7 @@ class PosManagementTest extends TestCase
 
     public function test_manual_batch_override_is_honored(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -348,7 +396,7 @@ class PosManagementTest extends TestCase
 
     public function test_selling_more_than_on_hand_stock_fails_validation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -370,7 +418,7 @@ class PosManagementTest extends TestCase
 
     public function test_selling_without_an_open_shift_is_forbidden(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -390,7 +438,7 @@ class PosManagementTest extends TestCase
 
     public function test_receipt_numbers_are_sequential_per_branch_and_independent_across_branches(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $secondBranch = Branch::factory()->create(['tenant_id' => $tenant->id, 'code' => 'DOWNTOWN']);
 
@@ -422,7 +470,7 @@ class PosManagementTest extends TestCase
 
     public function test_closing_shift_computes_expected_cash_and_variance_counting_only_cash(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -455,9 +503,84 @@ class PosManagementTest extends TestCase
         $this->assertEquals(-5, $shift->variance);
     }
 
+    public function test_closing_shift_emails_a_sales_summary_to_the_business_owner(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+
+        $tenant = Tenant::factory()->licensed()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
+        $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
+
+        $item = $this->makeItem($tenant, sellingPrice: 20);
+        $this->stockUp($tenant, $branch, $item, 10);
+
+        Volt::test('pages.pos.index')->set('opening_float', '100')->call('startShift');
+
+        Volt::test('pages.pos.index')
+            ->set('lines.0.item_id', $item->id)
+            ->set('lines.0.quantity', '2')
+            ->set('payments.0.method', 'cash')
+            ->set('payments.0.amount', '20')
+            ->call('addPayment')
+            ->set('payments.1.method', 'mobile_money')
+            ->set('payments.1.amount', '20')
+            ->call('completeSale');
+
+        Volt::test('pages.pos.index')
+            ->set('closing_float_counted', '115')
+            ->call('endShift');
+
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\ShiftClosedSummaryMail::class, function ($mail) use ($owner) {
+            return $mail->hasTo($owner->email)
+                && $mail->summary['sales_count'] === 1
+                && $mail->summary['total_sales'] === 40.0
+                && $mail->summary['cash_total'] === 20.0
+                && $mail->summary['mobile_money_total'] === 20.0
+                && $mail->summary['expected_cash'] === 120.0
+                && $mail->summary['variance'] === -5.0;
+        });
+    }
+
+    public function test_closing_shift_with_no_business_owner_sends_no_mail(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+
+        $tenant = Tenant::factory()->licensed()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
+
+        Volt::test('pages.pos.index')->set('opening_float', '100')->call('startShift');
+
+        Volt::test('pages.pos.index')
+            ->set('closing_float_counted', '100')
+            ->call('endShift');
+
+        \Illuminate\Support\Facades\Mail::assertNothingSent();
+    }
+
+    public function test_closing_shift_still_succeeds_if_the_summary_email_fails(): void
+    {
+        $tenant = Tenant::factory()->licensed()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $this->createUserWithRole($tenant, $branch, 'Business Owner');
+        $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
+
+        \Illuminate\Support\Facades\Mail::shouldReceive('to')->andThrow(new \RuntimeException('Simulated mail failure'));
+
+        Volt::test('pages.pos.index')->set('opening_float', '100')->call('startShift');
+
+        Volt::test('pages.pos.index')
+            ->set('closing_float_counted', '100')
+            ->call('endShift');
+
+        $shift = Shift::where('tenant_id', $tenant->id)->firstOrFail();
+        $this->assertEquals('closed', $shift->status);
+    }
+
     public function test_store_keeper_cannot_reach_pos(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $storeKeeper = $this->createUserWithRole($tenant, $branch, 'Store Keeper');
 
@@ -466,11 +589,11 @@ class PosManagementTest extends TestCase
 
     public function test_sales_list_is_tenant_isolated(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherBranch = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherShift = Shift::factory()->create(['tenant_id' => $otherTenant->id, 'branch_id' => $otherBranch->id]);
         Sale::factory()->create([
