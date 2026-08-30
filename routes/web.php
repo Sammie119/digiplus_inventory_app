@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\DatabaseBackupDownloadController;
 use App\Http\Controllers\ItemBarcodeLabelController;
+use App\Http\Controllers\PaystackCallbackController;
+use App\Http\Controllers\PaystackWebhookController;
 use App\Http\Controllers\SaleReceiptController;
 use App\Http\Controllers\TenantBackupDownloadController;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +14,16 @@ Route::view('/', 'welcome');
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
+
+// Billing/renewal is intentionally NOT behind 'tenant.active' -- a tenant
+// blocked by an expired or suspended license must still be able to reach
+// this page to renew.
+Route::middleware(['auth', 'verified'])->group(function () {
+    Volt::route('billing/renew', 'pages.billing.renew')->name('billing.renew');
+    Route::get('billing/paystack/callback', PaystackCallbackController::class)->name('billing.paystack.callback');
+});
+
+Route::post('webhooks/paystack', PaystackWebhookController::class)->name('webhooks.paystack');
 
 Route::middleware(['auth', 'verified', 'super-admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
     Volt::route('/', 'pages.super-admin.dashboard')->name('dashboard');
@@ -24,6 +36,7 @@ Route::middleware(['auth', 'verified', 'super-admin'])->prefix('super-admin')->n
 Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
     Volt::route('dashboard', 'pages.dashboard.index')->name('dashboard');
     Volt::route('reports/sales', 'pages.reports.sales')->name('reports.sales');
+    Volt::route('reports/profit-loss', 'pages.reports.profit-loss')->name('reports.profit-loss');
     Volt::route('reports/stock', 'pages.reports.stock')->name('reports.stock');
     Volt::route('reports/velocity', 'pages.reports.velocity')->name('reports.velocity');
     Volt::route('reports/shifts', 'pages.reports.shifts')->name('reports.shifts');
@@ -46,6 +59,10 @@ Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
     Volt::route('stock-transfers', 'pages.stock-transfers.index')->name('stock-transfers.index');
     Volt::route('stock-transfers/create', 'pages.stock-transfers.show')->name('stock-transfers.create');
     Volt::route('stock-transfers/{stockTransfer}', 'pages.stock-transfers.show')->name('stock-transfers.show');
+    Volt::route('stock-takings', 'pages.stock-takings.index')->name('stock-takings.index');
+    Volt::route('stock-takings/create', 'pages.stock-takings.show')->name('stock-takings.create');
+    Volt::route('stock-takings/{stockTake}', 'pages.stock-takings.show')->name('stock-takings.show');
+    Volt::route('financial-years', 'pages.financial-years.index')->name('financial-years.index');
     Volt::route('pos', 'pages.pos.index')->name('pos.index');
     Volt::route('sales', 'pages.sales.index')->name('sales.index');
     Route::get('sales/{uuid}/receipt', SaleReceiptController::class)->name('sales.receipt');

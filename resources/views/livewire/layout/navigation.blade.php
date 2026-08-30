@@ -71,7 +71,7 @@
             @can('stock.view')
                 <x-sidebar-group
                     :label="__('Inventory')"
-                    :active="request()->routeIs('products.*', 'categories.*', 'units-of-measure.*', 'stock-levels.*', 'suppliers.*', 'purchases.*', 'stock-adjustments.*', 'stock-transfers.*')"
+                    :active="request()->routeIs('products.*', 'categories.*', 'units-of-measure.*', 'stock-levels.*', 'suppliers.*', 'purchases.*', 'stock-adjustments.*', 'stock-transfers.*', 'stock-takings.*')"
                 >
                     <x-slot:icon><x-icon.box /></x-slot:icon>
 
@@ -106,6 +106,11 @@
                         <x-slot:icon><x-icon.transfer /></x-slot:icon>
                         {{ __('Stock Transfers') }}
                     </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('stock-takings.index')" :active="request()->routeIs('stock-takings.*')" wire:navigate>
+                        <x-slot:icon><x-icon.check-circle /></x-slot:icon>
+                        {{ __('Stock Takings') }}
+                    </x-sidebar-link>
                 </x-sidebar-group>
             @endcan
 
@@ -119,6 +124,11 @@
                     <x-sidebar-link :href="route('reports.sales')" :active="request()->routeIs('reports.sales')" wire:navigate>
                         <x-slot:icon><x-icon.trending-up /></x-slot:icon>
                         {{ __('Sales Report') }}
+                    </x-sidebar-link>
+
+                    <x-sidebar-link :href="route('reports.profit-loss')" :active="request()->routeIs('reports.profit-loss')" wire:navigate>
+                        <x-slot:icon><x-icon.receipt /></x-slot:icon>
+                        {{ __('Profit & Loss') }}
                     </x-sidebar-link>
 
                     <x-sidebar-link :href="route('reports.stock')" :active="request()->routeIs('reports.stock')" wire:navigate>
@@ -148,7 +158,7 @@
             @if (auth()->user()->can('tenant-settings.manage') || auth()->user()->can('branches.manage') || auth()->user()->can('users.manage') || auth()->user()->can('audit.view'))
                 <x-sidebar-group
                     :label="__('Administration')"
-                    :active="request()->routeIs('tax-rates.*', 'backups.*', 'branches.*', 'users.*', 'audit-log.*')"
+                    :active="request()->routeIs('tax-rates.*', 'backups.*', 'branches.*', 'users.*', 'audit-log.*', 'financial-years.*')"
                 >
                     <x-slot:icon><x-icon.shield-check /></x-slot:icon>
 
@@ -156,6 +166,11 @@
                         <x-sidebar-link :href="route('tax-rates.index')" :active="request()->routeIs('tax-rates.index')" wire:navigate>
                             <x-slot:icon><x-icon.percent /></x-slot:icon>
                             {{ __('Tax Rates') }}
+                        </x-sidebar-link>
+
+                        <x-sidebar-link :href="route('financial-years.index')" :active="request()->routeIs('financial-years.*')" wire:navigate>
+                            <x-slot:icon><x-icon.clock /></x-slot:icon>
+                            {{ __('Financial Years') }}
                         </x-sidebar-link>
 
                         <x-sidebar-link :href="route('backups.index')" :active="request()->routeIs('backups.index')" wire:navigate>
