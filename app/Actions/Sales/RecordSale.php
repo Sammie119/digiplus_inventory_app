@@ -36,7 +36,8 @@ class RecordSale
             $receiptNumber = sprintf('%s-%d-%06d', $branch->code, now()->year, $sequence);
 
             $subtotal = round(collect($resolvedLines)->sum(fn ($line) => $line['quantity'] * $line['unit_price']), 2);
-            $taxTotal = SaleTaxCalculator::calculate($actor->tenant_id, $resolvedLines)['total'];
+            $taxResult = SaleTaxCalculator::calculate($actor->tenant_id, $resolvedLines);
+            $taxTotal = $taxResult['total'];
 
             $sale = Sale::create([
                 'uuid' => $uuid,
@@ -54,6 +55,15 @@ class RecordSale
                 'sync_source' => $syncSource,
                 'synced_at' => now(),
             ]);
+
+            foreach ($taxResult['breakdown'] as $taxLine) {
+                $sale->taxLines()->create([
+                    'tax_rate_id' => $taxLine['tax_rate_id'],
+                    'name' => $taxLine['name'],
+                    'rate_percentage' => $taxLine['rate'],
+                    'amount' => $taxLine['amount'],
+                ]);
+            }
 
             $oversold = false;
 

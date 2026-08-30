@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SaleTaxLine;
 use App\Models\Shift;
 use App\Models\Tenant;
 use App\Models\UnitOfMeasure;
@@ -76,7 +77,7 @@ class SaleReceiptTest extends TestCase
 
     public function test_user_with_sales_view_can_open_the_receipt(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -90,9 +91,27 @@ class SaleReceiptTest extends TestCase
         $response->assertSee('46.00');
     }
 
+    public function test_receipt_shows_each_tax_line_separately_when_present(): void
+    {
+        $tenant = Tenant::factory()->licensed()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
+
+        $sale = $this->makeSale($tenant, $branch, $owner);
+
+        SaleTaxLine::create(['sale_id' => $sale->id, 'tax_rate_id' => null, 'name' => 'VAT', 'rate_percentage' => 12.5, 'amount' => 4]);
+        SaleTaxLine::create(['sale_id' => $sale->id, 'tax_rate_id' => null, 'name' => 'NHIL', 'rate_percentage' => 2.5, 'amount' => 2]);
+
+        $response = $this->get(route('sales.receipt', $sale));
+
+        $response->assertOk();
+        $response->assertSee('VAT (12.5%)');
+        $response->assertSee('NHIL (2.5%)');
+    }
+
     public function test_user_without_sales_permission_is_forbidden(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
         $storeKeeper = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Store Keeper'));
@@ -104,12 +123,12 @@ class SaleReceiptTest extends TestCase
 
     public function test_receipt_from_another_tenant_is_not_found(): void
     {
-        $tenantA = Tenant::factory()->create();
+        $tenantA = Tenant::factory()->licensed()->create();
         $branchA = Branch::factory()->main()->create(['tenant_id' => $tenantA->id]);
         $ownerA = $this->createUserWithRole($tenantA, $branchA, 'Business Owner');
         $saleA = $this->makeSale($tenantA, $branchA, $ownerA);
 
-        $tenantB = Tenant::factory()->create();
+        $tenantB = Tenant::factory()->licensed()->create();
         $branchB = Branch::factory()->main()->create(['tenant_id' => $tenantB->id]);
         $this->loginAs($this->createUserWithRole($tenantB, $branchB, 'Business Owner'));
 

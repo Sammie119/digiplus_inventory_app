@@ -24,7 +24,7 @@ class SaleReceiptController extends Controller
 
         Gate::authorize('view', $sale);
 
-        $sale->load(['items.item', 'payments', 'customer', 'branch', 'cashier']);
+        $sale->load(['items.item', 'payments', 'customer', 'branch', 'cashier', 'taxLines']);
 
         return view('receipts.sale', [
             'sale' => $sale,

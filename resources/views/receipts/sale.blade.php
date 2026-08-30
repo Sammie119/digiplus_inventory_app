@@ -95,7 +95,14 @@
                 <span>{{ __('Subtotal') }}</span>
                 <span>{{ number_format($sale->subtotal, 2) }}</span>
             </div>
-            @if ($sale->tax_total > 0)
+            @if ($sale->taxLines->isNotEmpty())
+                @foreach ($sale->taxLines as $taxLine)
+                    <div class="row">
+                        <span>{{ $taxLine->name }} ({{ rtrim(rtrim(number_format($taxLine->rate_percentage, 2), '0'), '.') }}%)</span>
+                        <span>{{ number_format($taxLine->amount, 2) }}</span>
+                    </div>
+                @endforeach
+            @elseif ($sale->tax_total > 0)
                 <div class="row">
                     <span>{{ __('Tax') }}</span>
                     <span>{{ number_format($sale->tax_total, 2) }}</span>

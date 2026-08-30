@@ -28,6 +28,7 @@ class SaleTaxCalculator
                 }
 
                 $breakdown[$rate->id] ??= [
+                    'tax_rate_id' => $rate->id,
                     'name' => $rate->name,
                     'rate' => (float) $rate->rate_percentage,
                     'amount' => 0.0,
