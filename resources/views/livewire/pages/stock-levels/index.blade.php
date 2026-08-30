@@ -3,6 +3,8 @@
 use App\Models\Batch;
 use App\Models\Branch;
 use App\Models\Item;
+use App\Models\TaxRate;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
@@ -45,7 +47,26 @@ new #[Layout('layouts.app')] class extends Component
     }
 
     #[Computed]
-    public function rows()
+    public function taxRates()
+    {
+        return TaxRate::where('tenant_id', Auth::user()->tenant_id)->get();
+    }
+
+    private function priceInclTax(Item $item): float
+    {
+        $categoryId = $item->product?->category_id;
+
+        $taxAmount = $this->taxRates->sum(function ($rate) use ($item, $categoryId) {
+            $applies = $rate->applies_to === 'all'
+                || ($rate->applies_to === 'category' && $categoryId !== null && $rate->category_id === $categoryId);
+
+            return $applies ? round((float) $item->selling_price * (float) $rate->rate_percentage / 100, 2) : 0;
+        });
+
+        return round((float) $item->selling_price + $taxAmount, 2);
+    }
+
+    private function itemsQuery()
     {
         $branchId = $this->branch_id;
 
@@ -60,25 +81,97 @@ new #[Layout('layouts.app')] class extends Component
                         ->orWhereHas('product', fn ($p) => $p->where('name', 'like', '%'.$this->search.'%'));
                 });
             })
-            ->orderByDesc('id')
-            ->paginate(20)
-            ->through(function (Item $item) use ($branchId) {
-                $onHand = (float) $item->stockLevels->sum('quantity_on_hand');
-                $reorderLevel = $branchId ? $item->reorderLevelForBranch($branchId) : $item->reorder_level;
+            ->orderByDesc('id');
+    }
 
-                $status = match (true) {
-                    $onHand <= 0 => 'out',
-                    $onHand <= $reorderLevel => 'low',
-                    default => 'ok',
-                };
+    private function mapRow(Item $item): array
+    {
+        $branchId = $this->branch_id;
+        $onHand = (float) $item->stockLevels->sum('quantity_on_hand');
+        $reorderLevel = $branchId ? $item->reorderLevelForBranch($branchId) : $item->reorder_level;
 
-                return [
-                    'item' => $item,
-                    'on_hand' => $onHand,
-                    'reorder_level' => $reorderLevel,
-                    'status' => $status,
-                ];
-            });
+        $status = match (true) {
+            $onHand <= 0 => 'out',
+            $onHand <= $reorderLevel => 'low',
+            default => 'ok',
+        };
+
+        return [
+            'item' => $item,
+            'on_hand' => $onHand,
+            'reorder_level' => $reorderLevel,
+            'status' => $status,
+            'price_incl_tax' => $this->priceInclTax($item),
+        ];
+    }
+
+    #[Computed]
+    public function rows()
+    {
+        return $this->itemsQuery()->paginate(20)->through(fn (Item $item) => $this->mapRow($item));
+    }
+
+    private function branchLabel(): string
+    {
+        if (! $this->branch_id) {
+            return __('All Branches (Consolidated)');
+        }
+
+        return $this->branchOptions->firstWhere('id', $this->branch_id)?->name ?? __('All Branches (Consolidated)');
+    }
+
+    private function exportFilename(string $extension): string
+    {
+        return 'stock-levels-'.now()->toDateString().".{$extension}";
+    }
+
+    public function exportCsv()
+    {
+        Gate::authorize('stock.view');
+
+        $rows = $this->itemsQuery()->get()->map(fn (Item $item) => $this->mapRow($item));
+        $branchLabel = $this->branchLabel();
+
+        return response()->streamDownload(function () use ($rows, $branchLabel) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [__('Stock Levels')]);
+            fputcsv($handle, [__('Branch'), $branchLabel]);
+            fputcsv($handle, [__('Generated'), now()->toDateTimeString()]);
+            fputcsv($handle, []);
+            fputcsv($handle, [__('SKU'), __('Product'), __('Price (incl. tax)'), __('On Hand'), __('Reorder Level'), __('Status')]);
+
+            foreach ($rows as $row) {
+                fputcsv($handle, [
+                    $row['item']->sku,
+                    $row['item']->product?->name,
+                    number_format($row['price_incl_tax'], 2, '.', ''),
+                    rtrim(rtrim(number_format($row['on_hand'], 3), '0'), '.'),
+                    $row['reorder_level'],
+                    ucfirst($row['status']),
+                ]);
+            }
+
+            fclose($handle);
+        }, $this->exportFilename('csv'), ['Content-Type' => 'text/csv']);
+    }
+
+    public function exportPdf()
+    {
+        Gate::authorize('stock.view');
+
+        $pdf = Pdf::loadView('pdf.stock-levels-report', [
+            'tenantName' => Auth::user()->tenant->name,
+            'branchName' => $this->branchLabel(),
+            'generatedAt' => now()->toDateTimeString(),
+            'rows' => $this->itemsQuery()->get()->map(fn (Item $item) => $this->mapRow($item)),
+        ]);
+
+        return response()->streamDownload(
+            fn () => print ($pdf->output()),
+            $this->exportFilename('pdf'),
+            ['Content-Type' => 'application/pdf'],
+        );
     }
 
     public function batchRowsForItem(int $itemId)
@@ -124,6 +217,15 @@ new #[Layout('layouts.app')] class extends Component
                         </select>
                     </div>
                 @endif
+
+                <div class="flex gap-2 sm:ml-auto">
+                    <x-secondary-button type="button" wire:click="exportCsv">
+                        {{ __('Export CSV') }}
+                    </x-secondary-button>
+                    <x-secondary-button type="button" wire:click="exportPdf">
+                        {{ __('Export PDF') }}
+                    </x-secondary-button>
+                </div>
             </div>
 
             <!-- Mobile: stacked cards -->
@@ -145,6 +247,9 @@ new #[Layout('layouts.app')] class extends Component
                             </span>
                         </div>
                         <div class="mt-3 flex items-center justify-between text-sm">
+                            <span class="text-gray-500 dark:text-gray-400">{{ __('Price (incl. tax)') }}: {{ number_format($row['price_incl_tax'], 2) }}</span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between text-sm">
                             <span class="text-gray-900 dark:text-gray-100">{{ __('On Hand') }}: {{ rtrim(rtrim(number_format($row['on_hand'], 3), '0'), '.') }}</span>
                             @if ($row['item']->track_batches)
                                 <button type="button" x-on:click="$dispatch('open-modal', 'batches-{{ $row['item']->id }}')" class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">{{ __('View Batches') }}</button>
@@ -163,6 +268,7 @@ new #[Layout('layouts.app')] class extends Component
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('SKU') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Product') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Price (incl. tax)') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('On Hand') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Reorder Level') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Status') }}</th>
@@ -174,6 +280,7 @@ new #[Layout('layouts.app')] class extends Component
                             <tr wire:key="stock-row-{{ $row['item']->id }}" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $row['item']->sku }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $row['item']->product?->name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ number_format($row['price_incl_tax'], 2) }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ rtrim(rtrim(number_format($row['on_hand'], 3), '0'), '.') }} {{ $row['item']->baseUnit->abbreviation }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $row['reorder_level'] }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -194,7 +301,7 @@ new #[Layout('layouts.app')] class extends Component
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ __('No items found.') }}</td>
+                                <td colspan="7" class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ __('No items found.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
