@@ -45,7 +45,7 @@ class AuditLogTest extends TestCase
 
     public function test_creating_an_auditable_model_writes_a_log_entry(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -69,7 +69,7 @@ class AuditLogTest extends TestCase
 
     public function test_updating_an_auditable_model_logs_only_changed_keys(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -97,7 +97,7 @@ class AuditLogTest extends TestCase
 
     public function test_no_op_save_does_not_create_a_log(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -118,7 +118,7 @@ class AuditLogTest extends TestCase
 
     public function test_non_auditable_model_does_not_write_logs(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -129,7 +129,7 @@ class AuditLogTest extends TestCase
 
     public function test_password_is_never_written_to_the_audit_log(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -149,7 +149,7 @@ class AuditLogTest extends TestCase
 
     public function test_business_owner_can_view_audit_log(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -158,7 +158,7 @@ class AuditLogTest extends TestCase
 
     public function test_branch_manager_cannot_view_audit_log(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $manager = $this->createUserWithRole($tenant, $branch, 'Branch Manager');
 
@@ -167,7 +167,7 @@ class AuditLogTest extends TestCase
 
     public function test_filters_narrow_the_list(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -195,11 +195,11 @@ class AuditLogTest extends TestCase
 
     public function test_tenant_isolation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherBranch = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherSupplier = Supplier::factory()->create(['tenant_id' => $otherTenant->id]);
         $otherOwner = $this->createUserWithRole($otherTenant, $otherBranch, 'Business Owner');

@@ -58,7 +58,7 @@ class ShiftReportTest extends TestCase
 
     public function test_closed_shift_shows_correct_variance_figures(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -74,7 +74,7 @@ class ShiftReportTest extends TestCase
 
     public function test_open_shift_appears_with_blank_variance(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -94,7 +94,7 @@ class ShiftReportTest extends TestCase
 
     public function test_date_range_excludes_shifts_outside_it(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -111,7 +111,7 @@ class ShiftReportTest extends TestCase
 
     public function test_branch_and_cashier_filters_narrow_the_list(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $otherBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
@@ -136,7 +136,7 @@ class ShiftReportTest extends TestCase
 
     public function test_summary_counts_discrepancies_and_sums_variance(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -153,7 +153,7 @@ class ShiftReportTest extends TestCase
 
     public function test_export_csv_and_pdf(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -172,7 +172,7 @@ class ShiftReportTest extends TestCase
 
     public function test_cashier_cannot_view_shift_report(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -181,11 +181,11 @@ class ShiftReportTest extends TestCase
 
     public function test_tenant_isolation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherBranch = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherCashier = User::factory()->create(['tenant_id' => $otherTenant->id, 'branch_id' => $otherBranch->id]);
         $this->makeClosedShift($otherTenant, $otherBranch, $otherCashier, 100, 100, 100);

@@ -80,7 +80,7 @@ class SalesReportExportTest extends TestCase
 
     public function test_reports_view_holder_can_export_csv_with_correct_figures(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -96,7 +96,7 @@ class SalesReportExportTest extends TestCase
 
     public function test_reports_view_holder_can_export_pdf(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -112,7 +112,7 @@ class SalesReportExportTest extends TestCase
 
     public function test_cashier_cannot_reach_the_report_to_export(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -123,7 +123,7 @@ class SalesReportExportTest extends TestCase
 
     public function test_export_respects_date_filter(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 

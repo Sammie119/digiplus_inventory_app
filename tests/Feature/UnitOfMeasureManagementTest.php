@@ -43,7 +43,7 @@ class UnitOfMeasureManagementTest extends TestCase
 
     public function test_business_owner_can_view_units_index(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 
@@ -55,7 +55,7 @@ class UnitOfMeasureManagementTest extends TestCase
 
     public function test_business_owner_can_create_unit(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -73,7 +73,7 @@ class UnitOfMeasureManagementTest extends TestCase
 
     public function test_cashier_can_view_but_not_create_unit(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -84,11 +84,11 @@ class UnitOfMeasureManagementTest extends TestCase
 
     public function test_unit_from_another_tenant_is_not_reachable(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherUnit = UnitOfMeasure::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $this->expectException(ModelNotFoundException::class);

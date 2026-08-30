@@ -71,7 +71,7 @@ class OfflineSaleSyncTest extends TestCase
 
     public function test_syncing_a_valid_offline_sale_creates_it(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -97,7 +97,7 @@ class OfflineSaleSyncTest extends TestCase
 
     public function test_syncing_an_offline_sale_that_exceeds_stock_is_not_blocked_but_flagged(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -121,7 +121,7 @@ class OfflineSaleSyncTest extends TestCase
 
     public function test_syncing_the_same_uuid_twice_only_creates_one_sale(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -144,7 +144,7 @@ class OfflineSaleSyncTest extends TestCase
 
     public function test_store_keeper_cannot_sync_offline_sales(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $storeKeeper = $this->createUserWithRole($tenant, $branch, 'Store Keeper');
 
@@ -157,7 +157,7 @@ class OfflineSaleSyncTest extends TestCase
 
     public function test_receipt_numbers_stay_sequential_across_online_and_offline_sales(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 

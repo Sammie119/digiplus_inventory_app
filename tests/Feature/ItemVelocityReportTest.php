@@ -108,7 +108,7 @@ class ItemVelocityReportTest extends TestCase
 
     public function test_fast_movers_excludes_voided_sales(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -130,7 +130,7 @@ class ItemVelocityReportTest extends TestCase
 
     public function test_slow_moving_lists_stocked_items_with_no_sales_in_window(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -150,7 +150,7 @@ class ItemVelocityReportTest extends TestCase
 
     public function test_abc_analysis_ranks_top_revenue_contributor_as_class_a(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -168,7 +168,7 @@ class ItemVelocityReportTest extends TestCase
 
     public function test_reorder_suggestion_uses_velocity_when_available_and_falls_back_otherwise(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -190,7 +190,7 @@ class ItemVelocityReportTest extends TestCase
 
     public function test_export_csv_and_pdf(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -210,7 +210,7 @@ class ItemVelocityReportTest extends TestCase
 
     public function test_cashier_cannot_view_item_velocity_report(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 

@@ -45,7 +45,7 @@ class UserManagementTest extends TestCase
     {
         Notification::fake();
 
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $secondBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
@@ -69,7 +69,7 @@ class UserManagementTest extends TestCase
     {
         Notification::fake();
 
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $otherBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Branch Manager'));
@@ -109,7 +109,7 @@ class UserManagementTest extends TestCase
 
     public function test_user_cannot_deactivate_their_own_account(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
 
@@ -122,7 +122,7 @@ class UserManagementTest extends TestCase
 
     public function test_last_active_business_owner_cannot_be_deactivated(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $mainBranch, 'Business Owner');
         $secondOwner = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
@@ -142,11 +142,11 @@ class UserManagementTest extends TestCase
 
     public function test_users_from_another_tenant_are_not_visible_or_reachable(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $mainBranch, 'Business Owner');
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherBranch = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherUser = $this->createUserWithRole($otherTenant, $otherBranch, 'Business Owner');
 

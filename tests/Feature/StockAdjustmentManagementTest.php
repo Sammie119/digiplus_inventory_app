@@ -63,7 +63,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_business_owner_can_view_stock_adjustments_index(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 
@@ -75,7 +75,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_store_keeper_can_create_pending_adjustment(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $keeper = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Store Keeper'));
 
@@ -102,7 +102,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_cashier_cannot_create_adjustment(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -113,7 +113,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_approving_increase_adjustment_creates_stock_movement_and_increments_stock(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -156,7 +156,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_approving_decrease_adjustment_with_sufficient_stock_decrements_stock(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -194,7 +194,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_approving_decrease_beyond_available_stock_fails_validation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -230,7 +230,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_store_keeper_cannot_approve_adjustment(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $keeper = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Store Keeper'));
 
@@ -252,7 +252,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_rejecting_pending_adjustment_has_no_stock_effect(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -283,7 +283,7 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_approving_already_resolved_adjustment_is_forbidden(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -305,11 +305,11 @@ class StockAdjustmentManagementTest extends TestCase
 
     public function test_adjustment_from_another_tenant_is_not_reachable(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherBranch = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherItem = $this->makeItem($otherTenant);
         $otherAdjustment = StockAdjustment::factory()->create([

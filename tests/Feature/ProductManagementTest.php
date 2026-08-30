@@ -45,7 +45,7 @@ class ProductManagementTest extends TestCase
 
     public function test_business_owner_can_view_products_index(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 
@@ -57,7 +57,7 @@ class ProductManagementTest extends TestCase
 
     public function test_business_owner_can_create_product(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -78,7 +78,7 @@ class ProductManagementTest extends TestCase
 
     public function test_cashier_can_view_but_not_create_product(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -89,11 +89,11 @@ class ProductManagementTest extends TestCase
 
     public function test_product_from_another_tenant_is_not_reachable(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherProduct = Product::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $this->actingAs($owner)
@@ -103,7 +103,7 @@ class ProductManagementTest extends TestCase
 
     public function test_business_owner_can_add_item_to_non_variant_product(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -129,7 +129,7 @@ class ProductManagementTest extends TestCase
 
     public function test_business_owner_can_add_variant_items_to_variant_product(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -154,7 +154,7 @@ class ProductManagementTest extends TestCase
 
     public function test_checking_track_batches_creates_a_batch_with_expiry(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -182,7 +182,7 @@ class ProductManagementTest extends TestCase
 
     public function test_batch_number_stays_optional_when_track_batches_is_checked(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -207,7 +207,7 @@ class ProductManagementTest extends TestCase
 
     public function test_duplicate_sku_within_tenant_is_rejected(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -233,7 +233,7 @@ class ProductManagementTest extends TestCase
 
     public function test_duplicate_barcode_within_tenant_is_rejected(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -260,7 +260,7 @@ class ProductManagementTest extends TestCase
 
     public function test_same_barcode_is_allowed_across_different_tenants(): void
     {
-        $tenantA = Tenant::factory()->create();
+        $tenantA = Tenant::factory()->licensed()->create();
         $branchA = Branch::factory()->main()->create(['tenant_id' => $tenantA->id]);
         $categoryA = Category::factory()->create(['tenant_id' => $tenantA->id]);
         $productA = Product::factory()->create(['tenant_id' => $tenantA->id, 'category_id' => $categoryA->id]);
@@ -269,7 +269,7 @@ class ProductManagementTest extends TestCase
             'tenant_id' => $tenantA->id, 'product_id' => $productA->id, 'barcode' => 'SHARED-CODE', 'base_unit_id' => $unitA->id,
         ]);
 
-        $tenantB = Tenant::factory()->create();
+        $tenantB = Tenant::factory()->licensed()->create();
         $branchB = Branch::factory()->main()->create(['tenant_id' => $tenantB->id]);
         $this->loginAs($this->createUserWithRole($tenantB, $branchB, 'Business Owner'));
         $categoryB = Category::factory()->create(['tenant_id' => $tenantB->id]);
@@ -290,7 +290,7 @@ class ProductManagementTest extends TestCase
 
     public function test_business_owner_can_deactivate_item(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -312,7 +312,7 @@ class ProductManagementTest extends TestCase
 
     public function test_cashier_cannot_add_item(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 

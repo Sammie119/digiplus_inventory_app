@@ -91,7 +91,7 @@ class StockReportTest extends TestCase
 
     public function test_valuation_total_is_correct(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -111,7 +111,7 @@ class StockReportTest extends TestCase
 
     public function test_reorder_exceptions_lists_only_low_and_out_items(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -134,7 +134,7 @@ class StockReportTest extends TestCase
 
     public function test_expiring_batches_classification(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -166,7 +166,7 @@ class StockReportTest extends TestCase
 
     public function test_movement_history_respects_date_filter(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -185,7 +185,7 @@ class StockReportTest extends TestCase
 
     public function test_export_csv_and_pdf_for_movements(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -205,7 +205,7 @@ class StockReportTest extends TestCase
 
     public function test_cashier_cannot_view_stock_report(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -214,7 +214,7 @@ class StockReportTest extends TestCase
 
     public function test_branch_manager_sees_only_their_branch(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $otherBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $manager = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Branch Manager'));
@@ -230,11 +230,11 @@ class StockReportTest extends TestCase
 
     public function test_tenant_isolation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherBranch = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherItem = $this->makeItem($otherTenant, costPrice: 1000);
         $this->stockUp($otherTenant, $otherBranch, $otherItem, 100);

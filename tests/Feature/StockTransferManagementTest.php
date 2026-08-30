@@ -72,7 +72,7 @@ class StockTransferManagementTest extends TestCase
 
     public function test_source_branch_manager_can_create_and_ship_transfer(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $sourceBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $destBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $manager = $this->loginAs($this->createUserWithRole($tenant, $sourceBranch, 'Branch Manager'));
@@ -111,7 +111,7 @@ class StockTransferManagementTest extends TestCase
 
     public function test_shipping_with_insufficient_stock_fails_validation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $sourceBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $destBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $sourceBranch, 'Branch Manager'));
@@ -138,7 +138,7 @@ class StockTransferManagementTest extends TestCase
 
     public function test_destination_branch_user_can_receive_with_short_delivery(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $sourceBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $destBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $sourceManager = $this->createUserWithRole($tenant, $sourceBranch, 'Branch Manager');
@@ -190,7 +190,7 @@ class StockTransferManagementTest extends TestCase
 
     public function test_unrelated_branch_user_cannot_ship_or_receive(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $sourceBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $destBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $thirdBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
@@ -233,7 +233,7 @@ class StockTransferManagementTest extends TestCase
 
     public function test_cancelling_pending_transfer_has_no_stock_effect(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $sourceBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $destBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $sourceBranch, 'Branch Manager'));
@@ -260,7 +260,7 @@ class StockTransferManagementTest extends TestCase
 
     public function test_shipping_an_already_shipped_transfer_is_forbidden(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $sourceBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $destBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $sourceBranch, 'Branch Manager'));
@@ -285,7 +285,7 @@ class StockTransferManagementTest extends TestCase
 
     public function test_from_and_to_branch_must_differ(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -302,7 +302,7 @@ class StockTransferManagementTest extends TestCase
 
     public function test_cashier_cannot_create_transfer(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -311,11 +311,11 @@ class StockTransferManagementTest extends TestCase
 
     public function test_transfer_from_another_tenant_is_not_reachable(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherSource = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherDest = Branch::factory()->create(['tenant_id' => $otherTenant->id]);
         $otherTransfer = StockTransfer::factory()->create([

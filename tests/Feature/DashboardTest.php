@@ -78,7 +78,7 @@ class DashboardTest extends TestCase
 
     public function test_owner_sees_todays_sales_figure(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -93,7 +93,7 @@ class DashboardTest extends TestCase
 
     public function test_figures_are_branch_scoped_for_non_owner(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $otherBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $manager = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Branch Manager'));
@@ -110,7 +110,7 @@ class DashboardTest extends TestCase
 
     public function test_cashier_without_reports_permission_does_not_see_report_widgets(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -123,7 +123,7 @@ class DashboardTest extends TestCase
 
     public function test_owner_sees_report_widgets(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 

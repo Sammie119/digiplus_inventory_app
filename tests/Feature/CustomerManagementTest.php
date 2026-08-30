@@ -74,7 +74,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_cashier_can_create_a_customer(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -95,7 +95,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_store_keeper_cannot_view_customers(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $storeKeeper = $this->createUserWithRole($tenant, $branch, 'Store Keeper');
 
@@ -104,7 +104,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_completing_credit_sale_requires_a_customer(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -126,7 +126,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_completing_credit_sale_increments_balance_and_logs_ledger_entry(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -162,7 +162,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_credit_sale_exceeding_limit_fails_validation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -187,7 +187,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_recording_a_payment_reduces_balance_and_logs_entry(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -210,7 +210,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_recording_a_payment_beyond_balance_fails_validation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
 
@@ -226,7 +226,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_voiding_credit_sale_reverses_customer_balance(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
         $manager = $this->createUserWithRole($tenant, $branch, 'Branch Manager');
@@ -269,7 +269,7 @@ class CustomerManagementTest extends TestCase
 
     public function test_voiding_non_credit_sale_does_not_touch_customer_ledger(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
         $manager = $this->createUserWithRole($tenant, $branch, 'Branch Manager');
@@ -302,11 +302,11 @@ class CustomerManagementTest extends TestCase
 
     public function test_customer_list_is_tenant_isolated(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         Customer::factory()->create(['tenant_id' => $otherTenant->id, 'name' => 'Other Tenant Customer']);
 
         Volt::test('pages.customers.index')->assertDontSee('Other Tenant Customer');

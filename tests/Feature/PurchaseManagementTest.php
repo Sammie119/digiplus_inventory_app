@@ -63,7 +63,7 @@ class PurchaseManagementTest extends TestCase
 
     public function test_business_owner_can_view_purchases_index(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 
@@ -75,7 +75,7 @@ class PurchaseManagementTest extends TestCase
 
     public function test_business_owner_can_save_a_draft_purchase(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -106,7 +106,7 @@ class PurchaseManagementTest extends TestCase
 
     public function test_receiving_purchase_creates_stock_movement_and_stock_level(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -146,7 +146,7 @@ class PurchaseManagementTest extends TestCase
 
     public function test_receiving_purchase_recalculates_weighted_average_cost(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -187,7 +187,7 @@ class PurchaseManagementTest extends TestCase
 
     public function test_receiving_purchase_creates_batch_when_item_tracks_batches(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -220,7 +220,7 @@ class PurchaseManagementTest extends TestCase
 
     public function test_received_purchase_cannot_be_edited_or_received_again(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -245,7 +245,7 @@ class PurchaseManagementTest extends TestCase
 
     public function test_cashier_cannot_create_purchase(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -254,11 +254,11 @@ class PurchaseManagementTest extends TestCase
 
     public function test_purchase_from_another_tenant_is_not_reachable(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherBranch = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherSupplier = Supplier::factory()->create(['tenant_id' => $otherTenant->id]);
         $otherPurchase = Purchase::factory()->create([

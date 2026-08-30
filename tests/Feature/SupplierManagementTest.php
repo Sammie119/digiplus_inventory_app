@@ -43,7 +43,7 @@ class SupplierManagementTest extends TestCase
 
     public function test_business_owner_can_view_suppliers_index(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 
@@ -55,7 +55,7 @@ class SupplierManagementTest extends TestCase
 
     public function test_business_owner_can_create_supplier(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -73,7 +73,7 @@ class SupplierManagementTest extends TestCase
 
     public function test_branch_manager_can_view_but_not_create_supplier(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Branch Manager'));
 
@@ -84,7 +84,7 @@ class SupplierManagementTest extends TestCase
 
     public function test_cashier_cannot_view_suppliers_index(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -93,11 +93,11 @@ class SupplierManagementTest extends TestCase
 
     public function test_supplier_from_another_tenant_is_not_reachable(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherSupplier = Supplier::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $this->expectException(ModelNotFoundException::class);

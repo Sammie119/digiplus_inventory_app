@@ -59,7 +59,7 @@ class ItemBarcodeLabelTest extends TestCase
 
     public function test_user_with_stock_view_can_open_the_label(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -74,7 +74,7 @@ class ItemBarcodeLabelTest extends TestCase
 
     public function test_item_without_a_barcode_falls_back_to_its_sku(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -88,7 +88,7 @@ class ItemBarcodeLabelTest extends TestCase
 
     public function test_copies_parameter_controls_how_many_labels_render(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -102,7 +102,7 @@ class ItemBarcodeLabelTest extends TestCase
 
     public function test_user_without_stock_view_is_forbidden(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
         $item = $this->makeItem($tenant);
@@ -120,11 +120,11 @@ class ItemBarcodeLabelTest extends TestCase
 
     public function test_label_from_another_tenant_is_not_found(): void
     {
-        $tenantA = Tenant::factory()->create();
+        $tenantA = Tenant::factory()->licensed()->create();
         $branchA = Branch::factory()->main()->create(['tenant_id' => $tenantA->id]);
         $itemA = $this->makeItem($tenantA);
 
-        $tenantB = Tenant::factory()->create();
+        $tenantB = Tenant::factory()->licensed()->create();
         $branchB = Branch::factory()->main()->create(['tenant_id' => $tenantB->id]);
         $this->loginAs($this->createUserWithRole($tenantB, $branchB, 'Business Owner'));
 

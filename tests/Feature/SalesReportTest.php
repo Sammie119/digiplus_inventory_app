@@ -80,7 +80,7 @@ class SalesReportTest extends TestCase
 
     public function test_date_range_excludes_sales_outside_it(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -98,7 +98,7 @@ class SalesReportTest extends TestCase
 
     public function test_revenue_cost_and_margin_totals_are_correct(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -116,7 +116,7 @@ class SalesReportTest extends TestCase
 
     public function test_tax_total_sums_correctly(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -132,7 +132,7 @@ class SalesReportTest extends TestCase
 
     public function test_voided_sale_is_excluded_from_totals(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -147,7 +147,7 @@ class SalesReportTest extends TestCase
 
     public function test_cashier_cannot_view_sales_report(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -156,7 +156,7 @@ class SalesReportTest extends TestCase
 
     public function test_branch_manager_sees_only_their_branch(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $otherBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $manager = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Branch Manager'));
@@ -175,7 +175,7 @@ class SalesReportTest extends TestCase
 
     public function test_business_owner_can_switch_branches(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $mainBranch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $otherBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $mainBranch, 'Business Owner'));
@@ -195,11 +195,11 @@ class SalesReportTest extends TestCase
 
     public function test_tenant_isolation(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
-        $otherTenant = Tenant::factory()->create();
+        $otherTenant = Tenant::factory()->licensed()->create();
         $otherBranch = Branch::factory()->main()->create(['tenant_id' => $otherTenant->id]);
         $otherCashier = User::factory()->create(['tenant_id' => $otherTenant->id, 'branch_id' => $otherBranch->id]);
         $this->makeSale($otherTenant, $otherBranch, $otherCashier, 5000, 2500);

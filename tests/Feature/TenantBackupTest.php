@@ -55,7 +55,7 @@ class TenantBackupTest extends TestCase
 
     public function test_business_owner_can_generate_a_backup_on_demand(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
         Category::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Beverages']);
@@ -76,7 +76,7 @@ class TenantBackupTest extends TestCase
 
     public function test_generating_a_backup_handles_items_with_json_variant_attributes(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
         Item::factory()->create(['tenant_id' => $tenant->id, 'variant_attributes' => ['size' => 'L', 'color' => 'Red']]);
@@ -94,7 +94,7 @@ class TenantBackupTest extends TestCase
 
     public function test_downloading_a_backup_from_another_tenant_is_not_found(): void
     {
-        $tenantA = Tenant::factory()->create();
+        $tenantA = Tenant::factory()->licensed()->create();
         $branchA = Branch::factory()->main()->create(['tenant_id' => $tenantA->id]);
         $this->createUserWithRole($tenantA, $branchA, 'Business Owner');
 
@@ -102,7 +102,7 @@ class TenantBackupTest extends TestCase
         app(GenerateTenantBackup::class)($tenantA->id);
         $backup = TenantBackup::where('tenant_id', $tenantA->id)->firstOrFail();
 
-        $tenantB = Tenant::factory()->create();
+        $tenantB = Tenant::factory()->licensed()->create();
         $branchB = Branch::factory()->main()->create(['tenant_id' => $tenantB->id]);
         $this->loginAs($this->createUserWithRole($tenantB, $branchB, 'Business Owner'));
 
@@ -111,7 +111,7 @@ class TenantBackupTest extends TestCase
 
     public function test_cashier_cannot_reach_the_backups_page(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -120,7 +120,7 @@ class TenantBackupTest extends TestCase
 
     public function test_deleting_a_backup_removes_the_row_and_the_file(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -138,9 +138,9 @@ class TenantBackupTest extends TestCase
 
     public function test_scheduled_command_generates_a_backup_per_tenant(): void
     {
-        $tenantA = Tenant::factory()->create();
+        $tenantA = Tenant::factory()->licensed()->create();
         Branch::factory()->main()->create(['tenant_id' => $tenantA->id]);
-        $tenantB = Tenant::factory()->create();
+        $tenantB = Tenant::factory()->licensed()->create();
         Branch::factory()->main()->create(['tenant_id' => $tenantB->id]);
 
         $this->artisan(RunScheduledTenantBackups::class)->assertSuccessful();
@@ -151,9 +151,9 @@ class TenantBackupTest extends TestCase
 
     public function test_one_tenants_backup_failure_does_not_block_the_next_tenants_backup(): void
     {
-        $brokenTenant = Tenant::factory()->create();
+        $brokenTenant = Tenant::factory()->licensed()->create();
         Branch::factory()->main()->create(['tenant_id' => $brokenTenant->id]);
-        $healthyTenant = Tenant::factory()->create();
+        $healthyTenant = Tenant::factory()->licensed()->create();
         Branch::factory()->main()->create(['tenant_id' => $healthyTenant->id]);
 
         $brokenTenantId = $brokenTenant->id;
@@ -183,7 +183,7 @@ class TenantBackupTest extends TestCase
 
     public function test_generating_an_eleventh_backup_prunes_the_oldest(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         CurrentTenant::set($tenant->id);
 

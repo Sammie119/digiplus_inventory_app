@@ -104,13 +104,13 @@ class TenantSubscriptionManagementTest extends TestCase
         app(PermissionRegistrar::class)->setPermissionsTeamId($tenant->id);
         CurrentTenant::set($tenant->id);
 
-        $this->get('/dashboard')->assertForbidden();
+        $this->get('/dashboard')->assertRedirect(route('billing.renew'));
     }
 
     public function test_reactivating_a_tenant_restores_access(): void
     {
         $superAdmin = $this->createSuperAdmin();
-        $tenant = Tenant::factory()->create(['status' => 'suspended']);
+        $tenant = Tenant::factory()->licensed()->create(['status' => 'suspended']);
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->createUserWithRole($tenant, $branch, 'Business Owner');
 

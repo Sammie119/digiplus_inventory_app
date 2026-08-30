@@ -53,7 +53,7 @@ class ScheduledReportTest extends TestCase
 
     public function test_business_owner_can_create_a_schedule(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -76,7 +76,7 @@ class ScheduledReportTest extends TestCase
 
     public function test_invalid_email_in_recipients_fails_without_creating_a_schedule(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -91,7 +91,7 @@ class ScheduledReportTest extends TestCase
 
     public function test_branch_manager_schedule_is_locked_to_their_own_branch(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $other = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Branch Manager'));
@@ -110,7 +110,7 @@ class ScheduledReportTest extends TestCase
 
     public function test_branch_manager_only_sees_their_own_branch_schedules(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $otherBranch = Branch::factory()->create(['tenant_id' => $tenant->id]);
         $manager = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Branch Manager'));
@@ -125,7 +125,7 @@ class ScheduledReportTest extends TestCase
 
     public function test_cashier_cannot_reach_scheduled_reports_page(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
@@ -134,7 +134,7 @@ class ScheduledReportTest extends TestCase
 
     public function test_deleting_a_schedule_removes_it(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -150,7 +150,7 @@ class ScheduledReportTest extends TestCase
 
     public function test_sales_report_data_matches_the_live_report_page(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $owner = $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -186,7 +186,7 @@ class ScheduledReportTest extends TestCase
     {
         Mail::fake();
 
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
 
         $due = ScheduledReport::factory()->create([
@@ -220,14 +220,14 @@ class ScheduledReportTest extends TestCase
 
     public function test_one_tenants_failure_does_not_block_the_next_tenants_report(): void
     {
-        $brokenTenant = Tenant::factory()->create();
+        $brokenTenant = Tenant::factory()->licensed()->create();
         Branch::factory()->main()->create(['tenant_id' => $brokenTenant->id]);
         $broken = ScheduledReport::factory()->create([
             'tenant_id' => $brokenTenant->id, 'branch_id' => null, 'frequency' => 'daily', 'last_sent_at' => null,
             'recipients' => ['solo@example.test'],
         ]);
 
-        $healthyTenant = Tenant::factory()->create();
+        $healthyTenant = Tenant::factory()->licensed()->create();
         Branch::factory()->main()->create(['tenant_id' => $healthyTenant->id]);
         $healthy = ScheduledReport::factory()->create([
             'tenant_id' => $healthyTenant->id, 'branch_id' => null, 'frequency' => 'daily', 'last_sent_at' => null,

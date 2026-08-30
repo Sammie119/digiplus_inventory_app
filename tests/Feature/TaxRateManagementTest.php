@@ -42,7 +42,7 @@ class TaxRateManagementTest extends TestCase
 
     public function test_business_owner_can_create_an_all_scoped_tax_rate(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -64,7 +64,7 @@ class TaxRateManagementTest extends TestCase
 
     public function test_business_owner_can_create_a_category_scoped_tax_rate(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
         $category = Category::factory()->create(['tenant_id' => $tenant->id]);
@@ -86,7 +86,7 @@ class TaxRateManagementTest extends TestCase
 
     public function test_category_scoped_tax_rate_requires_a_category(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -103,7 +103,7 @@ class TaxRateManagementTest extends TestCase
 
     public function test_deleting_a_tax_rate_removes_it(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $this->loginAs($this->createUserWithRole($tenant, $branch, 'Business Owner'));
 
@@ -119,7 +119,7 @@ class TaxRateManagementTest extends TestCase
 
     public function test_branch_manager_cannot_reach_tax_rates_page(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $manager = $this->createUserWithRole($tenant, $branch, 'Branch Manager');
 
@@ -128,7 +128,7 @@ class TaxRateManagementTest extends TestCase
 
     public function test_cashier_cannot_reach_tax_rates_page(): void
     {
-        $tenant = Tenant::factory()->create();
+        $tenant = Tenant::factory()->licensed()->create();
         $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
         $cashier = $this->createUserWithRole($tenant, $branch, 'Cashier');
 
