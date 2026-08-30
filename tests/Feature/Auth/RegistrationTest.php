@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\SubscriptionPlan;
+use App\Models\TenantSubscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
@@ -65,5 +67,34 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertTrue($user->hasRole('Business Owner'));
+    }
+
+    public function test_registration_enrolls_the_tenant_on_the_trial_plan(): void
+    {
+        Volt::test('pages.auth.register')
+            ->set('business_name', 'Test Retail Co')
+            ->set('name', 'Test User')
+            ->set('email', 'test@example.com')
+            ->set('password', 'password')
+            ->set('password_confirmation', 'password')
+            ->call('register');
+
+        $user = User::where('email', 'test@example.com')->firstOrFail();
+        $trialPlan = SubscriptionPlan::where('is_trial', true)->firstOrFail();
+
+        $this->assertDatabaseHas('tenant_subscriptions', [
+            'tenant_id' => $user->tenant_id,
+            'plan_id' => $trialPlan->id,
+            'status' => 'active',
+        ]);
+
+        $subscription = TenantSubscription::withoutTenantScope()
+            ->where('tenant_id', $user->tenant_id)
+            ->firstOrFail();
+
+        $this->assertSame(
+            now()->addDays(config('billing.trial_days'))->toDateString(),
+            $subscription->period_end->toDateString(),
+        );
     }
 }

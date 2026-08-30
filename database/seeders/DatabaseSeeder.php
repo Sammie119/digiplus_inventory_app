@@ -33,6 +33,10 @@ class DatabaseSeeder extends Seeder
             'is_super_admin' => true,
         ]);
 
+        // The plan every new tenant is automatically enrolled on at signup
+        // (see App\Actions\Tenants\RegisterTenantOwner).
+        SubscriptionPlan::create(config('billing.trial_plan'));
+
         // Platform-level subscription tiers (SRS §4.5 placeholder pricing —
         // pending a real business/pricing decision).
         $basicPlan = SubscriptionPlan::create([

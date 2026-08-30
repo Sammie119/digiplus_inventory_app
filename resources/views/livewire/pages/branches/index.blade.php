@@ -32,8 +32,19 @@ new #[Layout('layouts.app')] class extends Component
     {
         Gate::authorize('create', Branch::class);
 
+        $tenant = Auth::user()->tenant;
+
+        if (! $tenant->canAddBranch()) {
+            $max = $tenant->activeSubscription?->plan?->max_branches;
+            $this->addError('limit', __('Your plan allows up to :max branch(es). Upgrade your plan to add more.', ['max' => $max]));
+            $this->dispatch('toast', message: __('Branch limit reached for your current plan.'), type: 'error');
+
+            return;
+        }
+
         $this->reset(['branchId', 'name', 'code']);
         $this->resetErrorBag();
+        $this->js("window.dispatchEvent(new CustomEvent('open-modal', { detail: 'branch-form' }))");
     }
 
     public function editBranch(int $branchId): void
@@ -53,6 +64,14 @@ new #[Layout('layouts.app')] class extends Component
         $branch = $this->branchId ? Branch::findOrFail($this->branchId) : null;
 
         Gate::authorize($branch ? 'update' : 'create', $branch ?? Branch::class);
+
+        if (! $branch && ! Auth::user()->tenant->canAddBranch()) {
+            $max = Auth::user()->tenant->activeSubscription?->plan?->max_branches;
+            $this->addError('limit', __('Your plan allows up to :max branch(es). Upgrade your plan to add more.', ['max' => $max]));
+            $this->dispatch('toast', message: __('Branch limit reached for your current plan.'), type: 'error');
+
+            return;
+        }
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -122,8 +141,12 @@ new #[Layout('layouts.app')] class extends Component
                 <div class="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-md text-sm">{{ $message }}</div>
             @enderror
 
+            @error('limit')
+                <div class="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-md text-sm">{{ $message }}</div>
+            @enderror
+
             <div class="flex justify-end">
-                <x-primary-button wire:click="openCreateModal" x-on:click="$dispatch('open-modal', 'branch-form')">
+                <x-primary-button wire:click="openCreateModal">
                     <x-icon.plus class="h-4 w-4 -ml-0.5 mr-1.5" />
                     {{ __('Add Branch') }}
                 </x-primary-button>

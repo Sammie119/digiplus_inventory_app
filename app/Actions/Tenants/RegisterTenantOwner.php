@@ -3,7 +3,9 @@
 namespace App\Actions\Tenants;
 
 use App\Models\Branch;
+use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
+use App\Models\TenantSubscription;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +25,19 @@ class RegisterTenantOwner
                 'subdomain' => $this->uniqueSubdomain($businessName),
                 'currency' => 'GHS',
                 'status' => 'trial',
+            ]);
+
+            $trialPlan = SubscriptionPlan::firstOrCreate(
+                ['is_trial' => true],
+                config('billing.trial_plan'),
+            );
+
+            TenantSubscription::create([
+                'tenant_id' => $tenant->id,
+                'plan_id' => $trialPlan->id,
+                'period_start' => now()->toDateString(),
+                'period_end' => now()->addDays(config('billing.trial_days'))->toDateString(),
+                'status' => 'active',
             ]);
 
             $branch = Branch::create([

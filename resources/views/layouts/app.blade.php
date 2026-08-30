@@ -46,6 +46,7 @@
                         </div>
 
                         <div class="flex items-center gap-2">
+                            <x-license-badge />
                             <livewire:layout.notifications />
                             <livewire:layout.user-menu />
                         </div>

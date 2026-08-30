@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Branch;
+use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -40,6 +41,14 @@ class SuperAdminTenantCreationTest extends TestCase
 
         $tenant = Tenant::where('name', 'Acme Retail')->firstOrFail();
         $this->assertSame('trial', $tenant->status);
+
+        $trialPlan = SubscriptionPlan::where('is_trial', true)->firstOrFail();
+
+        $this->assertDatabaseHas('tenant_subscriptions', [
+            'tenant_id' => $tenant->id,
+            'plan_id' => $trialPlan->id,
+            'status' => 'active',
+        ]);
 
         $this->assertDatabaseHas('branches', [
             'tenant_id' => $tenant->id,

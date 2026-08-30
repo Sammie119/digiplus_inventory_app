@@ -25,4 +25,9 @@ class SubscriptionPlanFactory extends Factory
             'price' => 29.00,
         ];
     }
+
+    public function trial(): static
+    {
+        return $this->state(fn () => config('billing.trial_plan'));
+    }
 }
