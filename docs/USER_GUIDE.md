@@ -59,7 +59,8 @@ From *Point of Sale*, with a shift open:
 4. Add one or more **payments** (cash, mobile money, card, credit) — they must add
    up to exactly the sale total.
 5. **Complete Sale.** A receipt number is generated and stock is deducted
-   immediately. You can print or reprint the receipt any time from *Sales*.
+   immediately. You can print or reprint the receipt any time from *Sales* — it
+   shows a full breakdown of every tax applied, not just the total.
 
 ### Closing a shift
 At the end of the day (or shift), the cashier clicks **Close Shift**, counts the
@@ -67,6 +68,10 @@ cash physically in the drawer, and enters it. DigiPlus compares that count again
 what it *expects* (opening float + cash sales) and shows the **variance**. Large
 variances (20 or more) automatically notify you and the branch manager — see
 [Reviewing till variances](#reviewing-till-cash-variances) below.
+
+The moment the shift closes, DigiPlus also **emails you (the Business Owner) a
+summary** — sales count and total, the breakdown by payment method, and the
+cash variance — so you know how the till did without having to log in.
 
 ---
 
@@ -103,10 +108,13 @@ breakdown, payments, and any linked returns.
 ### Seeing what's running low or out
 Go to **Stock Levels** (under *Inventory*) — it lists every item with its current
 quantity on hand and a status badge: **OK**, **Low** (at or below its reorder
-level), or **Out of Stock**. Search by SKU or product name, and filter by branch
-if you have more than one (or view "All Branches" for a consolidated count).
-Batch-tracked items have a **View Batches** button showing each batch's expiry
-date and remaining quantity.
+level), or **Out of Stock**, alongside its unit price *and* its tax-inclusive
+price, so you can see what a customer actually pays without doing the maths
+yourself. Search by SKU or product name, and filter by branch if you have more
+than one (or view "All Branches" for a consolidated count). Batch-tracked items
+have a **View Batches** button showing each batch's expiry date and remaining
+quantity. Click **Export CSV** to download the full list, e.g. for a stock
+audit or to hand to an accountant.
 
 The reorder level that decides "Low" comes from the item's default, unless a
 specific branch has its own override — useful if one location sells through
@@ -142,6 +150,33 @@ Submit a request with a quantity, direction (increase/decrease), and a reason
 code. Like voids, this needs **manager approval** before it actually changes
 stock — this is your audit trail for shrinkage and damage.
 
+### Counting stock (stock takes)
+For a full physical count of a branch — reconciling what the system thinks you
+have against what's actually on the shelf — use **Stock Takes** (under
+*Inventory*). A stock take moves through a few stages:
+1. **Draft** — create it for a branch; DigiPlus pre-populates a line for every
+   item in that branch, with its current system quantity, so you're not typing
+   items in from scratch.
+2. **Start counting** — moves it to **In Progress**. Walk the shelves and enter
+   the actual counted quantity against each line (the system quantity stays
+   visible for comparison as you go).
+3. **Submit for approval** — moves it to **Pending Approval** once every line
+   has a count.
+4. **Approve** (a manager or you) — stock is adjusted to match what was
+   counted, and a variance is recorded per item for your records. You can also
+   **Cancel** a stock take at any stage before approval if it was started by
+   mistake.
+
+Each stock take is tied to the **Financial Year** it was opened in (see below).
+
+## Financial years
+**Administration → Financial Years** lets you open and close accounting
+periods (typically one per year). Closing a financial year is a checkpoint —
+DigiPlus won't let you close one while it still has a stock take in **Draft**,
+**In Progress**, or **Pending Approval**, so you can't lock in a period with an
+unreconciled count hanging over it. Once closed, it's a clean historical
+boundary for reporting.
+
 ---
 
 ## Customers & credit sales
@@ -173,6 +208,13 @@ current month) and branch, and you'll get:
 - A day-by-day breakdown for the period
 
 Click **Export CSV** or **Export PDF** to download it.
+
+### Understanding your profitability
+**Reports → Profit & Loss** goes a step further than the Sales Report: for a
+date range, it shows net revenue (after returns), cost of goods sold, gross
+profit, **shrinkage** (the cost of stock lost to write-offs and adjustments),
+and your resulting margin — plus a day-by-day trend and a breakdown by product
+category, so you can see which categories are actually making you money.
 
 ### Checking stock value and what's expiring
 **Reports → Stock Report** has four tabs:
