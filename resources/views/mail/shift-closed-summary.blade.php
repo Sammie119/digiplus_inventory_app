@@ -1,10 +1,10 @@
 <x-mail::message>
 # {{ __('Shift Closed') }}
 
-{{ __('Cashier') }}: **{{ $summary['cashier_name'] }}**
-{{ __('Branch') }}: **{{ $summary['branch_name'] }}**
-{{ __('Opened') }}: **{{ $summary['opened_at']->format('d M Y, H:i') }}**
-{{ __('Closed') }}: **{{ $summary['closed_at']->format('d M Y, H:i') }}**
+{{ __('Cashier') }}: **{{ $summary['cashier_name'] }}** <br>
+{{ __('Branch') }}: **{{ $summary['branch_name'] }}** <br>
+{{ __('Opened') }}: **{{ $summary['opened_at']->format('d M Y, H:i') }}** <br>
+{{ __('Closed') }}: **{{ $summary['closed_at']->format('d M Y, H:i') }}** <br>
 
 <x-mail::table>
 | {{ __('Sales') }} | {{ __('Total Sales') }} |

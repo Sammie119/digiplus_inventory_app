@@ -1,8 +1,8 @@
 <x-mail::message>
 # {{ __('Sales Report') }}
 
-{{ __('Branch') }}: **{{ $branchName }}**
-{{ __('Period') }}: **{{ $from }} – {{ $to }}**
+{{ __('Branch') }}: **{{ $branchName }}** <br>
+{{ __('Period') }}: **{{ $from }} – {{ $to }}** <br>
 
 <x-mail::table>
 | {{ __('Sales') }} | {{ __('Revenue') }} | {{ __('Cost') }} | {{ __('Margin') }} | {{ __('Margin %') }} |
