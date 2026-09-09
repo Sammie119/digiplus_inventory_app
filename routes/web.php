@@ -18,14 +18,14 @@ Route::view('profile', 'profile')
 // Billing/renewal is intentionally NOT behind 'tenant.active' -- a tenant
 // blocked by an expired or suspended license must still be able to reach
 // this page to renew.
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Volt::route('billing/renew', 'pages.billing.renew')->name('billing.renew');
     Route::get('billing/paystack/callback', PaystackCallbackController::class)->name('billing.paystack.callback');
 });
 
 Route::post('webhooks/paystack', PaystackWebhookController::class)->name('webhooks.paystack');
 
-Route::middleware(['auth', 'verified', 'super-admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+Route::middleware(['auth', 'super-admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
     Volt::route('/', 'pages.super-admin.dashboard')->name('dashboard');
     Volt::route('tenants', 'pages.super-admin.tenants')->name('tenants.index');
     Volt::route('subscription-plans', 'pages.super-admin.subscription-plans')->name('subscription-plans.index');
@@ -33,7 +33,7 @@ Route::middleware(['auth', 'verified', 'super-admin'])->prefix('super-admin')->n
     Route::get('database-backups/{databaseBackup}/download', DatabaseBackupDownloadController::class)->name('database-backups.download');
 });
 
-Route::middleware(['auth', 'verified', 'tenant.active'])->group(function () {
+Route::middleware(['auth', 'tenant.active'])->group(function () {
     Volt::route('dashboard', 'pages.dashboard.index')->name('dashboard');
     Volt::route('reports/sales', 'pages.reports.sales')->name('reports.sales');
     Volt::route('reports/profit-loss', 'pages.reports.profit-loss')->name('reports.profit-loss');

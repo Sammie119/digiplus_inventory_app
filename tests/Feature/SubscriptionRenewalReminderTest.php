@@ -54,6 +54,28 @@ class SubscriptionRenewalReminderTest extends TestCase
         Mail::assertNotSent(SubscriptionRenewalReminderMail::class, fn ($mail) => $mail->subscription->is($notDue));
     }
 
+    public function test_unverified_owner_receives_no_renewal_reminder(): void
+    {
+        Mail::fake();
+
+        $tenant = Tenant::factory()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        app(RolePermissionSeeder::class)->run();
+        app(RolePermissionSeeder::class)->seedForTeam($tenant->id);
+        $owner = User::factory()->unverified()->create(['tenant_id' => $tenant->id, 'branch_id' => $branch->id]);
+        $owner->assignRole('Business Owner');
+        $plan = SubscriptionPlan::factory()->create();
+
+        TenantSubscription::factory()->create([
+            'tenant_id' => $tenant->id, 'plan_id' => $plan->id, 'status' => 'active',
+            'period_end' => now()->addDays(3)->toDateString(),
+        ]);
+
+        $this->artisan(SendSubscriptionRenewalReminders::class)->assertSuccessful();
+
+        Mail::assertNothingSent();
+    }
+
     public function test_one_tenants_failure_does_not_block_the_next_tenants_reminder(): void
     {
         $brokenTenant = Tenant::factory()->create();

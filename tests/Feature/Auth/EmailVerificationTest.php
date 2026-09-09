@@ -2,7 +2,10 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Branch;
+use App\Models\Tenant;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -12,6 +15,25 @@ use Tests\TestCase;
 class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_an_unverified_user_still_has_full_app_access(): void
+    {
+        $tenant = Tenant::factory()->licensed()->create(['status' => 'active']);
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        app(RolePermissionSeeder::class)->run();
+        app(RolePermissionSeeder::class)->seedForTeam($tenant->id);
+
+        $owner = User::factory()->unverified()->create([
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+        ]);
+        $owner->assignRole('Business Owner');
+
+        $this->assertFalse($owner->hasVerifiedEmail());
+
+        $this->actingAs($owner)->get('/dashboard')->assertOk();
+        $this->actingAs($owner)->get('/billing/renew')->assertOk();
+    }
 
     public function test_email_verification_screen_can_be_rendered(): void
     {

@@ -470,6 +470,7 @@ new #[Layout('layouts.app')] class extends Component
         try {
             $owners = $shift->cashier->tenant->users()
                 ->whereHas('roles', fn ($q) => $q->where('name', 'Business Owner'))
+                ->whereNotNull('email_verified_at')
                 ->get();
 
             if ($owners->isEmpty()) {

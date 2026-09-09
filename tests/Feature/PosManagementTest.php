@@ -559,6 +559,30 @@ class PosManagementTest extends TestCase
         \Illuminate\Support\Facades\Mail::assertNothingSent();
     }
 
+    public function test_closing_shift_sends_no_mail_to_an_unverified_business_owner(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+
+        $tenant = Tenant::factory()->licensed()->create();
+        $branch = Branch::factory()->main()->create(['tenant_id' => $tenant->id]);
+        app(RolePermissionSeeder::class)->run();
+        app(RolePermissionSeeder::class)->seedForTeam($tenant->id);
+        $owner = User::factory()->unverified()->create([
+            'tenant_id' => $tenant->id,
+            'branch_id' => $branch->id,
+        ]);
+        $owner->assignRole('Business Owner');
+        $this->loginAs($this->createUserWithRole($tenant, $branch, 'Cashier'));
+
+        Volt::test('pages.pos.index')->set('opening_float', '100')->call('startShift');
+
+        Volt::test('pages.pos.index')
+            ->set('closing_float_counted', '100')
+            ->call('endShift');
+
+        \Illuminate\Support\Facades\Mail::assertNothingSent();
+    }
+
     public function test_closing_shift_still_succeeds_if_the_summary_email_fails(): void
     {
         $tenant = Tenant::factory()->licensed()->create();

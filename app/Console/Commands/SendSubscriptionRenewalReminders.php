@@ -33,6 +33,7 @@ class SendSubscriptionRenewalReminders extends Command
 
                 $owners = $subscription->tenant->users()
                     ->whereHas('roles', fn ($q) => $q->where('name', 'Business Owner'))
+                    ->whereNotNull('email_verified_at')
                     ->get();
 
                 foreach ($owners as $owner) {
