@@ -82,13 +82,22 @@ class EmailVerificationTest extends TestCase
         );
 
         $response = $this->actingAs($user)
-            ->withServerVariables(['HTTPS' => 'off', 'REMOTE_ADDR' => '10.0.0.1'])
+            ->withServerVariables(['HTTPS' => 'off', 'REMOTE_ADDR' => '127.0.0.1'])
             ->withHeader('X-Forwarded-Proto', 'https')
             ->get(str_replace('https://', 'http://', $verificationUrl));
 
         Event::assertDispatched(Verified::class);
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
         $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+    }
+
+    public function test_clients_cannot_spoof_the_host_used_in_generated_urls(): void
+    {
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+            ->withHeader('X-Forwarded-Host', 'attacker.example')
+            ->get('/login');
+
+        $response->assertOk()->assertDontSee('attacker.example');
     }
 
     public function test_email_is_not_verified_with_invalid_hash(): void

@@ -17,9 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Production terminates TLS at a proxy; honour X-Forwarded-* so the
-        // request is seen as https and signed URLs (email verification) validate.
-        $middleware->trustProxies(at: '*');
+        // Only a local proxy may tell us the original scheme. Never trust '*'
+        // or X-Forwarded-Host: clients could then rewrite generated URLs
+        // (e.g. password reset links) to point at another domain.
+        $middleware->trustProxies(
+            at: ['127.0.0.1', '::1'],
+            headers: Request::HEADER_X_FORWARDED_PROTO,
+        );
         $middleware->appendToGroup('web', SetCurrentTenant::class);
         $middleware->alias([
             'super-admin' => EnsureSuperAdmin::class,
