@@ -7,8 +7,10 @@ use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
@@ -52,38 +54,27 @@ class EmailVerificationTest extends TestCase
 
         Event::fake();
 
-        $verificationUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1($user->email)]
-        );
-
-        $response = $this->actingAs($user)->get($verificationUrl);
+        $response = $this->actingAs($user)->get($this->verificationUrlFor($user));
 
         Event::assertDispatched(Verified::class);
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
         $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
     }
 
-    public function test_email_can_be_verified_behind_a_tls_terminating_proxy(): void
+    public function test_email_can_be_verified_when_php_sees_plain_http(): void
     {
         $user = User::factory()->unverified()->create();
 
         Event::fake();
 
-        // Production signs links as https://, but the proxy forwards the
-        // request to PHP over plain http with X-Forwarded-Proto: https.
+        // Production emails https:// links, but PHP behind Nginx may see the
+        // request as plain http with no forwarded headers at all.
         URL::forceScheme('https');
-
-        $verificationUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1($user->email)]
-        );
+        $verificationUrl = $this->verificationUrlFor($user);
+        $this->assertStringStartsWith('https://', $verificationUrl);
 
         $response = $this->actingAs($user)
-            ->withServerVariables(['HTTPS' => 'off', 'REMOTE_ADDR' => '127.0.0.1'])
-            ->withHeader('X-Forwarded-Proto', 'https')
+            ->withServerVariables(['HTTPS' => 'off'])
             ->get(str_replace('https://', 'http://', $verificationUrl));
 
         Event::assertDispatched(Verified::class);
@@ -100,6 +91,24 @@ class EmailVerificationTest extends TestCase
         $response->assertOk()->assertDontSee('attacker.example');
     }
 
+    public function test_a_rejected_verification_link_is_logged(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        Log::spy();
+
+        $this->actingAs($user)
+            ->get($this->verificationUrlFor($user).'tampered')
+            ->assertForbidden();
+
+        Log::shouldHaveReceived('warning')
+            ->withArgs(fn ($message, $context) => $message === 'Rejected signed URL'
+                && $context['valid_relative'] === false
+                && $context['expired'] === false)
+            ->once();
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
+
     public function test_email_is_not_verified_with_invalid_hash(): void
     {
         $user = User::factory()->unverified()->create();
@@ -107,11 +116,20 @@ class EmailVerificationTest extends TestCase
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1('wrong-email')]
+            ['id' => $user->id, 'hash' => sha1('wrong-email')],
+            absolute: false,
         );
 
         $this->actingAs($user)->get($verificationUrl);
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
+
+    /**
+     * The link the real verification email contains.
+     */
+    private function verificationUrlFor(User $user): string
+    {
+        return (new VerifyEmail)->toMail($user)->actionUrl;
     }
 }

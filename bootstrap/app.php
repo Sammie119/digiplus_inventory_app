@@ -8,6 +8,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -39,6 +42,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('database:backup')->dailyAt('03:30');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // HTTP exceptions aren't reported, so log what the server actually
+        // received when a signed link (e.g. email verification) is rejected.
+        $exceptions->render(function (InvalidSignatureException $e, Request $request) {
+            Log::warning('Rejected signed URL', [
+                'url' => $request->url(),
+                'path' => $request->path(),
+                'query_string' => $request->server->get('QUERY_STRING'),
+                'secure' => $request->isSecure(),
+                'host' => $request->getHost(),
+                'expired' => (int) $request->query('expires') < now()->getTimestamp(),
+                'valid_absolute' => URL::hasCorrectSignature($request),
+                'valid_relative' => URL::hasCorrectSignature($request, absolute: false),
+            ]);
+
+            return null;
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
