@@ -65,6 +65,32 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
     }
 
+    public function test_email_can_be_verified_behind_a_tls_terminating_proxy(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        Event::fake();
+
+        // Production signs links as https://, but the proxy forwards the
+        // request to PHP over plain http with X-Forwarded-Proto: https.
+        URL::forceScheme('https');
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => sha1($user->email)]
+        );
+
+        $response = $this->actingAs($user)
+            ->withServerVariables(['HTTPS' => 'off', 'REMOTE_ADDR' => '10.0.0.1'])
+            ->withHeader('X-Forwarded-Proto', 'https')
+            ->get(str_replace('https://', 'http://', $verificationUrl));
+
+        Event::assertDispatched(Verified::class);
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+        $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+    }
+
     public function test_email_is_not_verified_with_invalid_hash(): void
     {
         $user = User::factory()->unverified()->create();

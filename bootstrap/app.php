@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Production terminates TLS at a proxy; honour X-Forwarded-* so the
+        // request is seen as https and signed URLs (email verification) validate.
+        $middleware->trustProxies(at: '*');
         $middleware->appendToGroup('web', SetCurrentTenant::class);
         $middleware->alias([
             'super-admin' => EnsureSuperAdmin::class,

@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (env('APP_ENV') === 'production') {
+        if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }
         // Super Admin is a platform-level flag, not a tenant-scoped Spatie
